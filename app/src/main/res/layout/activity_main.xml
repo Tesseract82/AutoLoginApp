@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context="com.example.unit271.geofencetest1.MainActivity"
+    android:id="@+id/r">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Name:"
+        android:id="@+id/teamNumView"
+        android:textSize="30sp"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/teamNumView2"
+        android:text="###"
+        android:layout_below="@+id/teamNumView"
+        android:layout_centerHorizontal="true" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Modify Profile"
+        android:id="@+id/numButton"
+        android:onClick="changeNumber"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_toEndOf="@+id/blankview"
+        android:layout_toRightOf="@+id/blankview" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Sign In Another Person"
+        android:id="@+id/SIOtherButton"
+        android:onClick="signInOther"
+        android:layout_above="@+id/decreaseHoursButton"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:textSize="12sp"
+        android:layout_toStartOf="@+id/blankview"
+        android:layout_toLeftOf="@+id/blankview" />
+
+    <Switch
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Automatic Mode"
+        android:id="@+id/locationSwitch"
+        android:layout_marginBottom="46dp"
+        android:checked="true"
+        android:layout_above="@+id/SIOtherButton"
+        android:layout_centerHorizontal="true"
+        android:onClick="processSwitch" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Decrease Hours"
+        android:id="@+id/decreaseHoursButton"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:onClick="decreaseHours"
+        android:layout_toStartOf="@+id/numButton"
+        android:layout_alignRight="@+id/SIOtherButton"
+        android:layout_alignEnd="@+id/SIOtherButton" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Manual Sign In"
+        android:id="@+id/manualButton"
+        android:layout_above="@+id/numButton"
+        android:layout_alignRight="@+id/numButton"
+        android:layout_alignEnd="@+id/numButton"
+        android:onClick="manualSignIn"
+        android:layout_toEndOf="@+id/blankview"
+        android:layout_toRightOf="@+id/blankview" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text=" "
+        android:id="@+id/blankview"
+        android:layout_above="@+id/decreaseHoursButton"
+        android:layout_centerHorizontal="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text=" "
+        android:id="@+id/blankView2"
+        android:layout_alignTop="@+id/numButton"
+        android:layout_centerHorizontal="true" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="NEW PROFILE"
+        android:id="@+id/newProfButton"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true"
+        android:onClick="onNewProfClick" />
+
+</RelativeLayout>
