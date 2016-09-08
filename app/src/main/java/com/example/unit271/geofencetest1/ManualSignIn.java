@@ -9,10 +9,11 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.firebase.client.DataSnapshot;
-import com.firebase.client.Firebase;
-import com.firebase.client.FirebaseError;
-import com.firebase.client.ValueEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -23,17 +24,17 @@ public class ManualSignIn extends AppCompatActivity {
     String teamName;
     TextView teamNameDisplay;
     Button signInSelf;
-    Firebase dataRef7;
+    DatabaseReference mDatabase, dataRef7;
     boolean currentlySignedInRobotics;
+    int totalRoboticsTime;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_manual_sign_in);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-        Firebase.setAndroidContext(this);
 
-        setTitle("Sign In");
+        setTitle("Automatic Login App");
         Button button = (Button) findViewById(R.id.buttonManualSignIn);
         if(currentlySignedInRobotics){
             button.setText("Logout");
@@ -45,13 +46,17 @@ public class ManualSignIn extends AppCompatActivity {
         signInSelf = (Button) findViewById(R.id.buttonManualSignIn);
         teamNameDisplay.setText(teamName);
         signInSelf.setEnabled(false);
-        dataRef7 = new Firebase("https://loginapptestcc.firebaseio.com/People/" + teamName);
+        mDatabase = FirebaseDatabase.getInstance().getReference();
+        dataRef7 = mDatabase.child("People").child(teamName);
         dataRef7.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                for (DataSnapshot infoSnapshot: dataSnapshot.getChildren()) {
-                    if(infoSnapshot.getKey().equals("CurrentlySignedInRobotics")){
+                for (DataSnapshot infoSnapshot : dataSnapshot.getChildren()) {
+                    if (infoSnapshot.getKey().equals("CurrentlySignedInRobotics")) {
                         currentlySignedInRobotics = (boolean) infoSnapshot.getValue();
+                    }
+                    if (infoSnapshot.getKey().equals("TotalRobotics")){
+                        totalRoboticsTime = (int) infoSnapshot.getValue();
                     }
                 }
                 signInSelf.setEnabled(true);
@@ -59,7 +64,7 @@ public class ManualSignIn extends AppCompatActivity {
             }
 
             @Override
-            public void onCancelled(FirebaseError firebaseError) {
+            public void onCancelled(DatabaseError databaseError) {
 
             }
         });
@@ -75,22 +80,22 @@ public class ManualSignIn extends AppCompatActivity {
     }
 
     public void onSignButtonClick2(View view){
-        LoginoutObject signSelfObject = new LoginoutObject();
         Date date = new Date(System.currentTimeMillis());
 
         SimpleDateFormat uploadFormatter = new SimpleDateFormat("MM-dd-yyyy-HHmm", Locale.US);
         String uploadDate = uploadFormatter.format(date);
 
-        signSelfObject.setTime(uploadDate);
-        signSelfObject.setLocation("Robotics");
         if(currentlySignedInRobotics){
-            signSelfObject.setAction("Out");
             dataRef7.child("CurrentlySignedInRobotics").setValue(false);
+            dataRef7.child("Logins").child(uploadDate).child("Status").setValue("Out");
+            dataRef7.child("Logins").child(uploadDate).child("Time").setValue(uploadDate);
         } else {
+            LoginoutObject signSelfObject = new LoginoutObject();
+            signSelfObject.setTime(0);
             signSelfObject.setAction("In");
             dataRef7.child("CurrentlySignedInRobotics").setValue(true);
+            dataRef7.child("Logins").child(uploadDate).setValue(signSelfObject);
         }
-        dataRef7.child("Logins").push().setValue(signSelfObject);
         Intent returnIntent = new Intent(this, MainActivity.class);
         startActivity(returnIntent);
     }

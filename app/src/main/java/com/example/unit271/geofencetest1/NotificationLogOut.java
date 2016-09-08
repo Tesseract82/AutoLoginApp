@@ -9,10 +9,11 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-import com.firebase.client.DataSnapshot;
-import com.firebase.client.Firebase;
-import com.firebase.client.FirebaseError;
-import com.firebase.client.ValueEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -26,7 +27,7 @@ public class NotificationLogOut extends Service {
     public static String filename = "NumberHolder";
     String teamID;
     SharedPreferences teamNumData;
-    Firebase personDirectory;
+    DatabaseReference mDatabase, personDirectory;
     boolean currentlySignedInRobotics;
 
     @Nullable
@@ -38,10 +39,10 @@ public class NotificationLogOut extends Service {
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Firebase.setAndroidContext(this);
         teamNumData = getSharedPreferences(filename, 0);
         teamID = teamNumData.getString("newIDKey", "NONE");
-        personDirectory = new Firebase("https://loginapptestcc.firebaseio.com/People/" + teamID);
+        mDatabase = FirebaseDatabase.getInstance().getReference();
+        personDirectory = mDatabase.child("People").child(teamID);
         personDirectory.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -60,7 +61,7 @@ public class NotificationLogOut extends Service {
             }
 
             @Override
-            public void onCancelled(FirebaseError firebaseError) {
+            public void onCancelled(DatabaseError databaseError) {
 
             }
         });
@@ -75,9 +76,8 @@ public class NotificationLogOut extends Service {
         String finalDateFormat = uploadFormatter.format(date);
         notificationLogOut.setTime(finalDateFormat);
         notificationLogOut.setLocation("Robotics");
-        Firebase dataRef = new Firebase("https://loginapptestcc.firebaseio.com/");
-        dataRef.child("People").child(teamID).child("Logins").push().setValue(notificationLogOut);
-        dataRef.child("People").child(teamID).child("CurrentlySignedInRobotics").setValue(false);
+        mDatabase.child("People").child(teamID).child("Logins").push().setValue(notificationLogOut);
+        mDatabase.child("People").child(teamID).child("CurrentlySignedInRobotics").setValue(false);
         stopNotificationService();
     }
 

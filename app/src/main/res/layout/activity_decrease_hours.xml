@@ -55,12 +55,11 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:inputType="number"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:text="Please input how many hours you would like to decrease from each category:"
-        android:id="@+id/instructView"
+        android:text="Decrease Unearned Hours"
+        android:id="@+id/staticView11"
         android:layout_alignParentTop="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true" />
+        android:layout_centerHorizontal="true"
+        android:textColor="#000000"
+        android:textSize="20sp" />
 
 </RelativeLayout>

@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "752458765170",
+    "firebase_url": "https://loginapptestcc.firebaseio.com",
+    "project_id": "loginapptestcc",
+    "storage_bucket": "loginapptestcc.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:752458765170:android:e2c8474302ac91d1",
+        "android_client_info": {
+          "package_name": "com.example.unit271.geofencetest1"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "752458765170-cmdfnd6nhmqq25i1i26etd1678vdi2gt.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCaSkZc7nCpdczrjyQ2ZuMCnjmRqO8sfHs"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,40 +1,32 @@
 package com.example.unit271.geofencetest1;
 
-import java.util.HashMap;
 
 /**
  * Created by unit271 on 7/1/16.
  */
 public class LoginoutObject {
-    private String Action, Location, Time;
+    private String Status;
+    private int Time;
 
     public LoginoutObject(){
 
     }
 
-    public void setAction(String Action){
-        this.Action = Action;
+    public void setAction(String Status){
+        this.Status = Status;
     }
 
-    public void setLocation(String Location){
-        this.Location = Location;
-    }
-
-    public void setTime(String Time){
+    public void setTime(int Time){
         this.Time = Time;
     }
 
     //***************************************************************************
 
-    public String getAction(){
-        return Action;
+    public String getStatus(){
+        return Status;
     }
 
-    public String getLocation(){
-        return Location;
-    }
-
-    public String getTime(){
+    public int getTime(){
         return Time;
     }
 

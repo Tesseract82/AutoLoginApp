@@ -20,11 +20,11 @@ import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.firebase.client.ChildEventListener;
-import com.firebase.client.DataSnapshot;
-import com.firebase.client.Firebase;
-import com.firebase.client.FirebaseError;
-import com.firebase.client.ValueEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +35,7 @@ public class signInOther extends AppCompatActivity {
     public ArrayList<String> teamNameList;
     public ArrayList<String> formattedList;
     public ArrayList<String> permanentTeamNameList;
-    Firebase dataRef;
+    DatabaseReference dataRef;
     public static String filename = "NumberHolder";
     SharedPreferences teamNumData;
     private ListView teamNameListView;
@@ -45,8 +45,7 @@ public class signInOther extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sign_in_other);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-        Firebase.setAndroidContext(this);
-        setTitle("Make Your Selection");
+        setTitle("Automatic Login App");
         teamNumData = getSharedPreferences(filename, 0);
         teamNameList = new ArrayList<String>();
         formattedList = new ArrayList<String>();
@@ -55,7 +54,7 @@ public class signInOther extends AppCompatActivity {
         formattedList.clear();
         permanentTeamNameList.clear();
         teamNameListView = (ListView) findViewById(R.id.peopleView);
-        dataRef = new Firebase("https://loginapptestcc.firebaseio.com/People");
+        dataRef = FirebaseDatabase.getInstance().getReference();
         dataRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -68,7 +67,7 @@ public class signInOther extends AppCompatActivity {
             }
 
             @Override
-            public void onCancelled(FirebaseError firebaseError) {
+            public void onCancelled(DatabaseError databaseError) {
 
             }
         });

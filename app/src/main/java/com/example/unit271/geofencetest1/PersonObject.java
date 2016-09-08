@@ -1,17 +1,17 @@
 package com.example.unit271.geofencetest1;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.firebase.database.Exclude;
+import com.google.firebase.database.IgnoreExtraProperties;
+import com.google.firebase.database.PropertyName;
 
 /**
  * Created by unit271 on 8/8/16.
  */
-@JsonIgnoreProperties(ignoreUnknown = true)
+@IgnoreExtraProperties
 public class PersonObject {
-    @JsonProperty("Password")
+    @PropertyName("Password")
     private String password;
-    @JsonIgnore
+    @Exclude
     private String personName;
 
     public PersonObject(){

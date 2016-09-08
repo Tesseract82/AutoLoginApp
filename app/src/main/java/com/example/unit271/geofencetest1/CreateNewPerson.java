@@ -10,26 +10,26 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.firebase.client.DataSnapshot;
-import com.firebase.client.Firebase;
-import com.firebase.client.FirebaseError;
-import com.firebase.client.ValueEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 
 public class CreateNewPerson extends AppCompatActivity {
 
-    Firebase dataRef5, dataRef6;
     ArrayList<String> teamNameList2;
     Button saveButton;
     EditText nameText, passText;
+    private DatabaseReference dataRef5, dataRef6;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_new_person);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-        Firebase.setAndroidContext(this);
         setTitle("Setup");
         saveButton = (Button) findViewById(R.id.newPersonButton);
         saveButton.setEnabled(false);
@@ -37,7 +37,7 @@ public class CreateNewPerson extends AppCompatActivity {
         passText = (EditText) findViewById(R.id.newPersonET2);
         teamNameList2 = new ArrayList<String>();
         teamNameList2.clear();
-        dataRef5 = new Firebase("https://loginapptestcc.firebaseio.com/");
+        dataRef5 = FirebaseDatabase.getInstance().getReference();
         dataRef6 = dataRef5.child("People");
         dataRef6.addValueEventListener(new ValueEventListener() {
             @Override
@@ -49,7 +49,7 @@ public class CreateNewPerson extends AppCompatActivity {
             }
 
             @Override
-            public void onCancelled(FirebaseError firebaseError) {
+            public void onCancelled(DatabaseError databaseError) {
 
             }
         });
@@ -73,6 +73,10 @@ public class CreateNewPerson extends AppCompatActivity {
                 dataRef5.child("People").child(newName).child("SubtractHoursCompetition").setValue(0);
                 dataRef5.child("People").child(newName).child("SubtractHoursFM").setValue(0);
                 dataRef5.child("People").child(newName).child("Password").setValue(newPassword);
+                dataRef5.child("People").child(newName).child("TotalRobotics").setValue(0);
+                dataRef5.child("People").child(newName).child("TotalFM").setValue(0);
+                dataRef5.child("People").child(newName).child("TotalCompetition").setValue(0);
+                dataRef5.child("People").child(newName).child("Type").setValue("Student");
 
                 Toast.makeText(getApplicationContext(), ("New Profile : " + newName),
                         Toast.LENGTH_SHORT).show();

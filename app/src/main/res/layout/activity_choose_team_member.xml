@@ -9,25 +9,13 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.example.unit271.geofencetest1.chooseTeamMember">
 
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="+"
-        android:id="@+id/newPersonButton"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
-        android:onClick="onAdditionClick" />
-
     <HorizontalScrollView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/horizontalScrollView"
         android:layout_alignParentTop="true"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:layout_toLeftOf="@+id/newPersonButton"
-        android:layout_toStartOf="@+id/newPersonButton" >
+        android:layout_alignParentStart="true">
 
         <EditText
             android:layout_width="wrap_content"
@@ -41,7 +29,17 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/newTeamListView"
-        android:layout_below="@+id/newPersonButton"
+        android:layout_below="@+id/horizontalScrollView"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true" />
+
+    <ImageButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/newPersonButton"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:onClick="onAdditionClick"
+        android:src="@android:drawable/ic_input_add" />
 </RelativeLayout>

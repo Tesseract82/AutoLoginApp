@@ -8,9 +8,11 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.database.DataSetObserver;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Editable;
+import android.text.InputType;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -20,14 +22,17 @@ import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.firebase.client.DataSnapshot;
-import com.firebase.client.Firebase;
-import com.firebase.client.FirebaseError;
-import com.firebase.client.ValueEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -36,21 +41,22 @@ import java.util.Locale;
 public class chooseTeamMember extends AppCompatActivity {
     public String searchString;
     public ArrayList<PersonObject> teamHoursList, permanentTeamHoursList, formattedTeamHoursList;
-    Firebase dataRef;
+    DatabaseReference dataRef;
     public static String filename = "NumberHolder";
     SharedPreferences teamNumData;
     private ListView teamNameListView;
-    private Button additionButton;
+    private ImageButton additionButton;
     SimpleDateFormat logTimeFormat;
     PersonObject po;
     Context appContext;
+    private DatabaseReference mDatabase;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_choose_team_member);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-        Firebase.setAndroidContext(this);
+        setTitle("Automatic Login App");
         appContext = this;
         logTimeFormat = new SimpleDateFormat("MM-dd-yyyy-HHmm", Locale.US);
         teamNumData = getSharedPreferences(filename, 0);
@@ -61,30 +67,32 @@ public class chooseTeamMember extends AppCompatActivity {
         formattedTeamHoursList.clear();
         permanentTeamHoursList.clear();
         teamNameListView = (ListView) findViewById(R.id.newTeamListView);
-        additionButton = (Button) findViewById(R.id.newPersonButton);
+        additionButton = (ImageButton) findViewById(R.id.newPersonButton);
         additionButton.setEnabled(false);
-        dataRef = new Firebase("https://loginapptestcc.firebaseio.com/People");
+        mDatabase = FirebaseDatabase.getInstance().getReference();
+        dataRef = mDatabase.child("People");
         retreiveAllPersonData();
     }
 
     public void retreiveAllPersonData() {
         teamHoursList.clear();
         dataRef.addValueEventListener(new ValueEventListener() {
+
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                for (DataSnapshot personSnapshot : dataSnapshot.getChildren()) {
-                    PersonObject newPerson = personSnapshot.getValue(PersonObject.class);
-                    newPerson.setPersonName(personSnapshot.getKey());
-                    teamHoursList.add(newPerson);
-                    permanentTeamHoursList.add(newPerson);
-                }
-                dataRef.removeEventListener(this);
-                generatePersonList();
-                additionButton.setEnabled(true);
+                    for (DataSnapshot personSnapshot : dataSnapshot.getChildren()) {
+                        PersonObject newPerson = personSnapshot.getValue(PersonObject.class);
+                        newPerson.setPersonName(personSnapshot.getKey());
+                        teamHoursList.add(newPerson);
+                        permanentTeamHoursList.add(newPerson);
+                    }
+                    dataRef.removeEventListener(this);
+                    generatePersonList();
+                    additionButton.setEnabled(true);
             }
 
             @Override
-            public void onCancelled(FirebaseError firebaseError) {
+            public void onCancelled(DatabaseError databaseError) {
 
             }
         });
@@ -173,12 +181,33 @@ public class chooseTeamMember extends AppCompatActivity {
                         po = teamHoursList.get(x);
                     }
                 }
+                RelativeLayout.LayoutParams params1 = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                RelativeLayout.LayoutParams params2 = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                RelativeLayout.LayoutParams params3 = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
                 AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(appContext);
+                final RelativeLayout rl1 = new RelativeLayout(getBaseContext());
+                rl1.setId(1);
+                rl1.setLayoutParams(params1);
+                final TextView rlPasswordView = new TextView(getBaseContext());
+                params2.addRule(RelativeLayout.ALIGN_PARENT_START);
+                params2.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+                params2.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+                rlPasswordView.setId(2);
+                rlPasswordView.setTextSize(20);
+                rlPasswordView.setTextColor(Color.BLACK);
+                rlPasswordView.setText("Enter Password");
                 final EditText passwordText = new EditText(getBaseContext());
+                params3.addRule(RelativeLayout.BELOW, rlPasswordView.getId());
+                params3.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+                params3.addRule(RelativeLayout.ALIGN_PARENT_START);
+                passwordText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+                passwordText.setId(3);
                 passwordText.setTextSize(20);
                 passwordText.setTextColor(Color.BLACK);
-                passwordText.setHint("Enter Password");
-                alertDialogBuilder.setView(passwordText);
+                rl1.addView(rlPasswordView, params2);
+                rl1.addView(passwordText, params3);
+
+                alertDialogBuilder.setView(rl1);
                 alertDialogBuilder.setCancelable(true).setPositiveButton("Enter", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
 

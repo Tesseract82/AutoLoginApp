@@ -44,7 +44,8 @@
         android:id="@+id/newPersonET2"
         android:layout_below="@+id/newPersonstaticview2"
         android:layout_centerHorizontal="true"
-        android:hint="Enter Password" />
+        android:hint="Enter Password"
+        android:inputType="textPassword" />
 
     <Button
         android:layout_width="wrap_content"

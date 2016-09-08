@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.os.CountDownTimer;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
@@ -16,6 +17,12 @@ import android.widget.Button;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 
 public class MainActivity extends FragmentActivity {
@@ -28,27 +35,71 @@ public class MainActivity extends FragmentActivity {
     public boolean startPerm;
     public Switch locationSwitch;
     public static String filename = "NumberHolder";
+    private DatabaseReference mDatabase, fbRef1;
+    public Button manualButton;
+    CountDownTimer dTimer2;
+    boolean countingDown;
 
     @TargetApi(Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if (getIntent().getExtras() != null && getIntent().getExtras().getBoolean("EXIT", false)) {
+            finish();
+        }
+
         setContentView(R.layout.activity_main);
+        setTitle("Automatic Login App");
 
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         teamNumData = getSharedPreferences(filename, 0);
         setTitle("Citrus Circuits");
 
+        manualButton = (Button) findViewById(R.id.manualButton);
         numView = (TextView) findViewById(R.id.teamNumView2);
         locationSwitch = (Switch) findViewById(R.id.locationSwitch);
         switchPermission = teamNumData.getBoolean("switchPermission", true);
         locationSwitch.setChecked(switchPermission);
+        SharedPreferences.Editor editor = teamNumData.edit();
+        editor.putBoolean("setInitialRange", locationSwitch.isChecked());
+        editor.commit();
         if(!teamNumData.getBoolean("setupComplete", false)) {
             Intent numChange = new Intent(this, chooseTeamMember.class);
             startActivity(numChange);
         }
 
+        countingDown = false;
+        dTimer2 = new CountDownTimer(2000, 1000) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+                countingDown = true;
+            }
+
+            @Override
+            public void onFinish() {
+                countingDown = false;
+            }
+        };
+
         teamID = teamNumData.getString("newIDKey", "NONE");
+        mDatabase = FirebaseDatabase.getInstance().getReference();
+        fbRef1 = mDatabase.child("People").child(teamID).child("CurrentlySignedInRobotics");
+        fbRef1.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if((boolean) dataSnapshot.getValue()){
+                    manualButton.setText("Sign Out");
+                } else {
+                    manualButton.setText("Sign In");
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
         if(teamID.equals("NONE")){
             startPerm = false;
             numView.setText("No Name");
@@ -132,6 +183,7 @@ public class MainActivity extends FragmentActivity {
             editor.putBoolean("switchPermission", false);
             stopService();
         }
+        editor.putBoolean("setInitialRange", switchState);
         editor.commit();
 
         switchPermission = teamNumData.getBoolean("switchPermission", true);
@@ -179,6 +231,19 @@ public class MainActivity extends FragmentActivity {
         } else {
             Toast.makeText(getApplicationContext(), "Please Disable Automatic Mode First",
                     Toast.LENGTH_SHORT).show();
+        }
+    }
+    @Override
+    public void onBackPressed(){
+        if(!countingDown){
+            dTimer2.start();
+            countingDown = true;
+            Toast.makeText(getBaseContext(), "Press Back Again to Exit", Toast.LENGTH_SHORT).show();
+        } else {
+            Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.putExtra("EXIT", true);
+            startActivity(intent);
         }
     }
 }

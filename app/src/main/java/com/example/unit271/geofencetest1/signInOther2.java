@@ -9,10 +9,11 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.firebase.client.DataSnapshot;
-import com.firebase.client.Firebase;
-import com.firebase.client.FirebaseError;
-import com.firebase.client.ValueEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -24,23 +25,23 @@ public class signInOther2 extends AppCompatActivity {
     String otherName;
     TextView textViewWho;
     boolean currentlySignedInRobotics;
-    Firebase dataRef3, dataRef4;
+    DatabaseReference mDatabase, dataRef3, dataRef4;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sign_in_other2);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-        Firebase.setAndroidContext(this);
 
         otherName = getIntent().getStringExtra("com.example.unit271.geofencetest1/signInOther");
         signOther = (Button) findViewById(R.id.buttonSignOther);
         textViewWho = (TextView) findViewById(R.id.textViewWho);
         textViewWho.setText(otherName);
-        setTitle("Sign In");
+        setTitle("Automatic Login App");
         signOther.setEnabled(false);
-        dataRef4 = new Firebase("https://loginapptestcc.firebaseio.com/People/" + otherName);
-        dataRef3 = new Firebase("https://loginapptestcc.firebaseio.com/People/" + otherName + "/Logins");
+        mDatabase = FirebaseDatabase.getInstance().getReference();
+        dataRef4 = mDatabase.child("People").child(otherName);
+        dataRef3 = mDatabase.child("People").child(otherName).child("Logins");
         dataRef4.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -54,7 +55,7 @@ public class signInOther2 extends AppCompatActivity {
             }
 
             @Override
-            public void onCancelled(FirebaseError firebaseError) {
+            public void onCancelled(DatabaseError databaseError) {
 
             }
         });

@@ -9,17 +9,18 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.firebase.client.DataSnapshot;
-import com.firebase.client.Firebase;
-import com.firebase.client.FirebaseError;
-import com.firebase.client.ValueEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 public class decreaseHours extends AppCompatActivity {
 
     String teamID;
     EditText decreaseHoursText, decreaseHoursTextFM, decreaseHoursTextCompetition;
     Button decreaseHoursButton;
-    Firebase dataRef6;
+    DatabaseReference dataRef6, dataBase;
     int SubtractHoursRobotics, SubtractHoursFM, SubtractHoursCompetition;
 
     @Override
@@ -27,10 +28,10 @@ public class decreaseHours extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_decrease_hours);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-        setTitle("Decrease Hours");
-        Firebase.setAndroidContext(this);
+        setTitle("Automatic Login App");
         teamID = getIntent().getStringExtra("com.example.unit271.geofencetest1/MainActivity");
-        dataRef6 = new Firebase("https://loginapptestcc.firebaseio.com/People/" + teamID);
+        dataBase = FirebaseDatabase.getInstance().getReference();
+        dataRef6 = dataBase.child("People").child(teamID);
         SubtractHoursRobotics = 0;
         SubtractHoursCompetition = 0;
         SubtractHoursFM = 0;
@@ -57,7 +58,7 @@ public class decreaseHours extends AppCompatActivity {
             }
 
             @Override
-            public void onCancelled(FirebaseError firebaseError) {
+            public void onCancelled(DatabaseError databaseError) {
 
             }
         });

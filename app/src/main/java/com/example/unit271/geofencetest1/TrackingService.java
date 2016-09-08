@@ -21,10 +21,6 @@ import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.firebase.client.DataSnapshot;
-import com.firebase.client.Firebase;
-import com.firebase.client.FirebaseError;
-import com.firebase.client.ValueEventListener;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.Result;
@@ -32,6 +28,11 @@ import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -59,17 +60,18 @@ public class TrackingService extends Service implements
     SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE", Locale.US);
     HashMap school;
     SharedPreferences teamNumData;
-    Firebase personDirectory;
+    DatabaseReference mDatabase, personDirectory;
     public static String filename = "NumberHolder";
     public boolean isRunning;
     final NotificationCompat.Builder loginBuilder = new NotificationCompat.Builder(this);
     final NotificationCompat.Builder logoutBuilder = new NotificationCompat.Builder(this);
-    private String schoolName;
+    String schoolName;
     public boolean rangeCheckerA;
     public boolean rangeCheckerB;
-    int setInitialRange;
     boolean tracking = false;
     NotificationManager mNotificationManager;
+    DatabaseReference connectedRef;
+    public boolean stillConnected;
 
     @Override
     public void onCreate() {
@@ -81,13 +83,39 @@ public class TrackingService extends Service implements
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Firebase.setAndroidContext(this);
         Log.i("SERVICE1", "Service onStartCommand");
-        setInitialRange = 0;
+        Log.i("INITIALRANGE", "TRACKINGSERVICERESTART");
+        Log.i("INITIALRANGE", "TRACKINGSERVICERESTART");
+        Log.i("INITIALRANGE", "TRACKINGSERVICERESTART");
+        Log.i("INITIALRANGE", "TRACKINGSERVICERESTART");
         isRunning = false;
         teamNumData = getSharedPreferences(filename, 0);
+        Log.i("INITIALRANGE", String.valueOf(teamNumData.getBoolean("setInitialRange", true)));
         teamID = teamNumData.getString("newIDKey", "NONE");
-        personDirectory = new Firebase("https://loginapptestcc.firebaseio.com/People/" + teamID);
+        mDatabase = FirebaseDatabase.getInstance().getReference();
+        personDirectory = mDatabase.child("People").child(teamID);
+
+        connectedRef = mDatabase.child(".info").child("connected");
+        connectedRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                boolean connected = dataSnapshot.getValue(Boolean.class);
+                if (connected) {
+                    stillConnected = true;
+                } else {
+                    stillConnected = false;
+                    SharedPreferences.Editor editor = teamNumData.edit();
+                    editor.putBoolean("setInitialRange", true);
+                    editor.commit();
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+
         personListener();
 
         Uri alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
@@ -129,16 +157,16 @@ public class TrackingService extends Service implements
         }
 
 
-        loginBuilder.setContentTitle("1678 Login");
-        loginBuilder.setContentText(teamID + ", you have been signed in to Citrus Circuits");
+        loginBuilder.setContentTitle(teamID + " : Logged In");
+        loginBuilder.setContentText("Click to Log Out");
         loginBuilder.setContentIntent(contentIntent);
         loginBuilder.setSmallIcon(R.drawable.check);
         loginBuilder.setSound(alarmSound);
         loginBuilder.setLights(Color.GREEN, 500, 1000);
         loginBuilder.setAutoCancel(true);
 
-        logoutBuilder.setContentTitle("1678 Logout");
-        logoutBuilder.setContentText(teamID + ", you have been signed out of Citrus Circuits");
+        logoutBuilder.setContentTitle(teamID + " : Logged Out");
+        logoutBuilder.setContentText("You have been signed out of Citrus Circuits");
         logoutBuilder.setSmallIcon(R.drawable.doublecheck);
         logoutBuilder.setSound(alarmSound);
         logoutBuilder.setLights(Color.GREEN, 500, 1000);
@@ -157,22 +185,24 @@ public class TrackingService extends Service implements
             }
 
             public void onFinish() {
-                for(int a = 0; a <= 2; a++) {
-                    Log.i("onFinish", "sendToForm");
-                }
-                isRunning = false;
-                rangeCheckerA = teamNumData.getBoolean("rangeBoolean", true); // should return true here after first use
-                if(!(rangeCheckerB == rangeCheckerA)) {
-                    sendToForm(rangeCheckerA);
-                    if(timerNotificationState){
-                        NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-                        mNotificationManager.notify(0, loginBuilder.build());
-                    } else {
-                        NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-                        mNotificationManager.notify(0, logoutBuilder.build());
+                if(stillConnected) {
+                    for (int a = 0; a <= 2; a++) {
+                        Log.i("onFinish", "sendToForm");
                     }
-                } else {
-                    Log.i("onFinish", "RangeDisagreement");
+                    isRunning = false;
+                    rangeCheckerA = teamNumData.getBoolean("rangeBoolean", true); // should return true here after first use
+                    if (!(rangeCheckerB == rangeCheckerA)) {
+                        sendToForm(rangeCheckerA);
+                        if (timerNotificationState) {
+                            NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                            mNotificationManager.notify(0, loginBuilder.build());
+                        } else {
+                            NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                            mNotificationManager.notify(0, logoutBuilder.build());
+                        }
+                    } else {
+                        Log.i("onFinish", "RangeDisagreement");
+                    }
                 }
             }
         };
@@ -188,9 +218,12 @@ public class TrackingService extends Service implements
 
     @Override
     public void onDestroy(){
-        Log.i("TrackingService", "ONDESTROY");
+        Log.i("INITIALRANGE", "ONDESTROY");
         stopLocationUpdates();
         personDirectory.removeEventListener(personListenerObject);
+        SharedPreferences.Editor spEditor = teamNumData.edit();
+        spEditor.putBoolean("setInitialRange", true);
+        spEditor.commit();
         Toast.makeText(getApplicationContext(), "Tracking Disabled.",
                 Toast.LENGTH_SHORT).show();
         super.onDestroy();
@@ -242,33 +275,109 @@ public class TrackingService extends Service implements
 
     @Override
     public void onLocationChanged(Location location) {
-        Log.i("TRACKINGSERVICE", "ONLOCATIONCHANGED");
-        mLastLocation = mCurrentLocation;
-        mCurrentLocation = location;
+        Log.i("INITIALRANGE", "ONLOCATIONCHANGED");
 
-        double locLatitude = location.getLatitude();
-        double locLongitude = location.getLongitude();
+        if(stillConnected) {
+            mLastLocation = mCurrentLocation;
+            mCurrentLocation = location;
 
-        weekDay = dayFormat.format(calendar.getTime());
-        Date date = new Date(System.currentTimeMillis());
-        SimpleDateFormat hourFormatter = new SimpleDateFormat("HH");
-        SimpleDateFormat minuteFormatter = new SimpleDateFormat("mm");
-        String hourString = hourFormatter.format(date);
-        String minuteString = minuteFormatter.format(date);
-        int hourTimeInt = Integer.parseInt(hourString);
-        int minuteTimeInt = Integer.parseInt(minuteString);
-        int currentTime = (hourTimeInt * 100) + minuteTimeInt;
-        Log.i("NORMTIMENORMTIME", normStart + "    " + normEnd);
-        rangeCheckerA = teamNumData.getBoolean("rangeBoolean", false);
-        if (!rangeCheckerA && (locLatitude >= 38.55608987 && locLatitude <= 38.557) && (locLongitude >= -121.7522 && locLongitude <= -121.75105237)) {
-            if (weekDay.equals("Wednesday")) {
-                if ((currentTime < wedStart) || (currentTime > wedEnd)) {
-                    Log.i("RANGE", "WITHIN RANGE");
+            double locLatitude = location.getLatitude();
+            double locLongitude = location.getLongitude();
+
+            weekDay = dayFormat.format(calendar.getTime());
+            Date date = new Date(System.currentTimeMillis());
+            SimpleDateFormat hourFormatter = new SimpleDateFormat("HH");
+            SimpleDateFormat minuteFormatter = new SimpleDateFormat("mm");
+            SimpleDateFormat summerFormatter = new SimpleDateFormat("MMdd", Locale.US);
+            String monthDayString = summerFormatter.format(date);
+            String hourString = hourFormatter.format(date);
+            String minuteString = minuteFormatter.format(date);
+            int monthDayInt = Integer.parseInt(monthDayString);
+            int hourTimeInt = Integer.parseInt(hourString);
+            int minuteTimeInt = Integer.parseInt(minuteString);
+            int currentTime = (hourTimeInt * 100) + minuteTimeInt;
+            Log.i("NORMTIMENORMTIME", normStart + "    " + normEnd);
+            rangeCheckerA = teamNumData.getBoolean("rangeBoolean", false);
+            if (!rangeCheckerA && (locLatitude >= 38.55608987 && locLatitude <= 38.557) && (locLongitude >= -121.7522 && locLongitude <= -121.75105237)) {
+                if(monthDayInt <= 606 && monthDayInt >= 824) {
+                    if (weekDay.equals("Wednesday")) {
+                        if ((currentTime < wedStart) || (currentTime > wedEnd)) {
+                            Log.i("INITIALRANGE", "WITHIN RANGE");
+                            SharedPreferences.Editor editor = teamNumData.edit();
+                            editor.putBoolean("rangeBoolean", true);
+                            editor.commit();
+                            timerNotificationState = true;
+
+                            if (isRunning) {
+                                Log.i("DTIMER", "CANCELLING");
+                                dTimer1.cancel();
+                                isRunning = false;
+                            } else {
+                                Log.i("DTIMER", "STARTING");
+                                dTimer1.start();
+                                isRunning = true;
+                            }
+
+                        }
+                    } else if (weekDay.equals("Thursday")) {
+                        if ((currentTime < thursStart) || (currentTime > thursEnd)) {
+                            Log.i("INITIALRANGE", "WITHIN RANGE");
+                            SharedPreferences.Editor editor = teamNumData.edit();
+                            editor.putBoolean("rangeBoolean", true);
+                            editor.commit();
+                            timerNotificationState = true;
+                            if (isRunning) {
+                                Log.i("DTIMER", "CANCELLING");
+                                dTimer1.cancel();
+                                isRunning = false;
+                            } else {
+                                Log.i("DTIMER", "STARTING");
+                                dTimer1.start();
+                                isRunning = true;
+                            }
+
+                        }
+                    } else if (weekDay.equals("Saturday") || weekDay.equals("Sunday")) {
+                        Log.i("INITIALRANGE", "WITHIN RANGE");
+                        SharedPreferences.Editor editor = teamNumData.edit();
+                        editor.putBoolean("rangeBoolean", true);
+                        editor.commit();
+                        timerNotificationState = true;
+                        if (isRunning) {
+                            Log.i("DTIMER", "CANCELLING");
+                            dTimer1.cancel();
+                            isRunning = false;
+                        } else {
+                            Log.i("DTIMER", "STARTING");
+                            dTimer1.start();
+                            isRunning = true;
+                        }
+                    } else {
+                        Log.i("NORMTIMENORMTIME", normStart + "    " + normEnd);
+                        if ((currentTime < normStart) || (currentTime > normEnd)) {
+                            Log.i("INITIALRANGE", "WITHIN RANGE");
+                            SharedPreferences.Editor editor = teamNumData.edit();
+                            editor.putBoolean("rangeBoolean", true);
+                            editor.commit();
+                            timerNotificationState = true;
+                            if (isRunning) {
+                                Log.i("DTIMER", "CANCELLING");
+                                dTimer1.cancel();
+                                isRunning = false;
+                            } else {
+                                Log.i("DTIMER", "STARTING");
+                                dTimer1.start();
+                                isRunning = true;
+                            }
+
+                        }
+                    }
+                } else {
+                    Log.i("INITIALRANGE", "WITHIN RANGE SUMMER");
                     SharedPreferences.Editor editor = teamNumData.edit();
                     editor.putBoolean("rangeBoolean", true);
                     editor.commit();
                     timerNotificationState = true;
-
                     if (isRunning) {
                         Log.i("DTIMER", "CANCELLING");
                         dTimer1.cancel();
@@ -278,33 +387,15 @@ public class TrackingService extends Service implements
                         dTimer1.start();
                         isRunning = true;
                     }
-
                 }
-            } else if (weekDay.equals("Thursday")) {
-                if ((currentTime < thursStart) || (currentTime > thursEnd)) {
-                    Log.i("RANGE", "WITHIN RANGE");
-                    SharedPreferences.Editor editor = teamNumData.edit();
-                    editor.putBoolean("rangeBoolean", true);
-                    editor.commit();
-                    timerNotificationState = true;
-                    if (isRunning) {
-                        Log.i("DTIMER", "CANCELLING");
-                        dTimer1.cancel();
-                        isRunning = false;
-                    } else {
-                        Log.i("DTIMER", "STARTING");
-                        dTimer1.start();
-                        isRunning = true;
-                    }
+            } else if (rangeCheckerA && ((locLatitude < 38.55608987 || locLatitude > 38.557) || (locLongitude < -121.7522 || locLongitude > -121.75105237))) {
+                Log.i("INITIALRANGE", "OUTSIDE RANGE");
+                timerNotificationState = false;
 
-                }
-            } else if (weekDay.equals("Saturday") || weekDay.equals("Sunday")) {
-                Log.i("RANGE", "WITHIN RANGE");
                 SharedPreferences.Editor editor = teamNumData.edit();
-                editor.putBoolean("rangeBoolean", true);
+                editor.putBoolean("rangeBoolean", false);
                 editor.commit();
-                timerNotificationState = true;
-                if(isRunning) {
+                if (isRunning) {
                     Log.i("DTIMER", "CANCELLING");
                     dTimer1.cancel();
                     isRunning = false;
@@ -313,41 +404,6 @@ public class TrackingService extends Service implements
                     dTimer1.start();
                     isRunning = true;
                 }
-            } else {
-                Log.i("NORMTIMENORMTIME", normStart + "    " + normEnd);
-                if ((currentTime < normStart) || (currentTime > normEnd)) {
-                    Log.i("RANGE", "WITHIN RANGE");
-                    SharedPreferences.Editor editor = teamNumData.edit();
-                    editor.putBoolean("rangeBoolean", true);
-                    editor.commit();
-                    timerNotificationState = true;
-                    if (isRunning) {
-                        Log.i("DTIMER", "CANCELLING");
-                        dTimer1.cancel();
-                        isRunning = false;
-                    } else {
-                        Log.i("DTIMER", "STARTING");
-                        dTimer1.start();
-                        isRunning = true;
-                    }
-
-                }
-            }
-        } else if (rangeCheckerA && ((locLatitude < 38.55608987 || locLatitude > 38.557) || (locLongitude < -121.7522 || locLongitude > -121.75105237))) {
-            Log.i("RANGE", "OUTSIDE RANGE");
-            timerNotificationState = false;
-
-            SharedPreferences.Editor editor = teamNumData.edit();
-            editor.putBoolean("rangeBoolean", false);
-            editor.commit();
-            if(isRunning) {
-                Log.i("DTIMER", "CANCELLING");
-                dTimer1.cancel();
-                isRunning = false;
-            } else {
-                Log.i("DTIMER", "STARTING");
-                dTimer1.start();
-                isRunning = true;
             }
         }
     }
@@ -364,15 +420,14 @@ public class TrackingService extends Service implements
                 LoginoutObject loginout = new LoginoutObject();
                 loginout.setTime(uploadDate);
                 loginout.setLocation("Robotics");
-                Firebase dataRef = new Firebase("https://loginapptestcc.firebaseio.com/");
                 if(tmpRangeCheckerA){
                     loginout.setAction("In");
-                    dataRef.child("People").child(tmpTeamID).child("CurrentlySignedInRobotics").setValue(true);
+                    mDatabase.child("People").child(tmpTeamID).child("CurrentlySignedInRobotics").setValue(true);
                 } else {
                     loginout.setAction("Out");
-                    dataRef.child("People").child(tmpTeamID).child("CurrentlySignedInRobotics").setValue(false);
+                    mDatabase.child("People").child(tmpTeamID).child("CurrentlySignedInRobotics").setValue(false);
                 }
-                dataRef.child("People").child(tmpTeamID).child("Logins").push().setValue(loginout);
+                mDatabase.child("People").child(tmpTeamID).child("Logins").push().setValue(loginout);
             }
         }.start();
     }
@@ -394,19 +449,20 @@ public class TrackingService extends Service implements
                 for (DataSnapshot infoSnapshot : dataSnapshot.getChildren()) {
                     if (infoSnapshot.getKey().equals("CurrentlySignedInRobotics")) {
                         rangeCheckerB = (boolean) infoSnapshot.getValue();
-                        if (setInitialRange == 0) {
+                        if (teamNumData.getBoolean("setInitialRange", true)) { //Return true after first use
                             SharedPreferences.Editor editor = teamNumData.edit();
                             editor.putBoolean("rangeBoolean", (boolean) infoSnapshot.getValue());
+                            editor.putBoolean("setInitialRange", false);
                             editor.commit();
-                            setInitialRange++;
-                            Log.i("INITIALIZERANGEA", String.valueOf(teamNumData.getBoolean("rangeBoolean", false)));
+                            Log.i("INITIALRANGEA", String.valueOf(teamNumData.getBoolean("rangeBoolean", false)));
                         }
                     }
                 }
+                stillConnected = true;
             }
 
             @Override
-            public void onCancelled(FirebaseError firebaseError) {
+            public void onCancelled(DatabaseError databaseError) {
 
             }
         });
