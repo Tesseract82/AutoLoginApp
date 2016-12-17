@@ -15,6 +15,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -28,7 +29,8 @@ public class NotificationLogOut extends Service {
     String teamID;
     SharedPreferences teamNumData;
     DatabaseReference mDatabase, personDirectory;
-    boolean currentlySignedInRobotics;
+    String LastSigninRobotics;
+    int totalRoboticsTime;
 
     @Nullable
     @Override
@@ -47,11 +49,14 @@ public class NotificationLogOut extends Service {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 for (DataSnapshot infoSnapshot : dataSnapshot.getChildren()) {
-                    if (infoSnapshot.getKey().equals("CurrentlySignedInRobotics")) {
-                        currentlySignedInRobotics = (boolean) infoSnapshot.getValue();
+                    if (infoSnapshot.getKey().equals("LastSigninRobotics")) {
+                        LastSigninRobotics = infoSnapshot.getValue().toString();
+                    }
+                    if (infoSnapshot.getKey().equals("TotalRobotics")){
+                        totalRoboticsTime = ((Long) infoSnapshot.getValue()).intValue();
                     }
                 }
-                if (currentlySignedInRobotics) {
+                if (LastSigninRobotics != null) {
                     personDirectory.removeEventListener(this);
                     notificationLogoutMethod();
                 } else {
@@ -69,15 +74,24 @@ public class NotificationLogOut extends Service {
     }
 
     public void notificationLogoutMethod(){
-        LoginoutObject notificationLogOut = new LoginoutObject();
-        notificationLogOut.setAction("Out");
         Date date = new Date(System.currentTimeMillis());
         SimpleDateFormat uploadFormatter = new SimpleDateFormat("MM-dd-yyyy-HHmm", Locale.US);
-        String finalDateFormat = uploadFormatter.format(date);
-        notificationLogOut.setTime(finalDateFormat);
-        notificationLogOut.setLocation("Robotics");
-        mDatabase.child("People").child(teamID).child("Logins").push().setValue(notificationLogOut);
-        mDatabase.child("People").child(teamID).child("CurrentlySignedInRobotics").setValue(false);
+        Date lastDate = null;
+        try {
+            if(LastSigninRobotics != null) {
+                lastDate = uploadFormatter.parse(LastSigninRobotics);
+            }
+        } catch(ParseException pe){
+            pe.printStackTrace();
+        }
+        int finalDateInt = 0;
+        if(lastDate != null) {
+            finalDateInt = (int) (date.getTime() - lastDate.getTime());
+        }
+        mDatabase.child("People").child(teamID).child("TotalRobotics").setValue(totalRoboticsTime + (finalDateInt / (1000*60)));
+        mDatabase.child("People").child(teamID).child("RoboticsLogs").child(LastSigninRobotics).child("Status").setValue("Out");
+        mDatabase.child("People").child(teamID).child("RoboticsLogs").child(LastSigninRobotics).child("Time").setValue(finalDateInt / (1000*60));
+        mDatabase.child("People").child(teamID).child("LastSigninRobotics").setValue(null);
         stopNotificationService();
     }
 

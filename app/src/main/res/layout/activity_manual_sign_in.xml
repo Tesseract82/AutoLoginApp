@@ -37,4 +37,15 @@
         android:onClick="onSignButtonClick2"
         android:layout_centerVertical="true"
         android:layout_centerHorizontal="true" />
+
+    <Spinner
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/loginTypeSpinner"
+        android:spinnerMode="dropdown"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignRight="@+id/textViewManualName"
+        android:layout_alignEnd="@+id/textViewManualName" />
 </RelativeLayout>

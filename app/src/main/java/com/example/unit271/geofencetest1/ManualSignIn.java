@@ -5,9 +5,14 @@ import android.content.pm.ActivityInfo;
 import android.graphics.Color;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -15,18 +20,25 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 
 public class ManualSignIn extends AppCompatActivity {
 
     String teamName;
+    String currentLoginType;
     TextView teamNameDisplay;
     Button signInSelf;
     DatabaseReference mDatabase, dataRef7;
-    boolean currentlySignedInRobotics;
-    int totalRoboticsTime;
+    String lastSignedInRobotics, lastSignedInFM, lastSignedInCompetition;
+    int totalRoboticsTime, totalFMTime, totalCompetitionTime;
+    Button button;
+    Spinner loginTypeSpinner;
+    PersonObject currentPerson;
+    ArrayList<String> otherTypesLoginStatus;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,32 +47,58 @@ public class ManualSignIn extends AppCompatActivity {
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
         setTitle("Automatic Login App");
-        Button button = (Button) findViewById(R.id.buttonManualSignIn);
-        if(currentlySignedInRobotics){
-            button.setText("Logout");
-        } else {
-            button.setText("Login");
-        }
+        otherTypesLoginStatus = new ArrayList<>();
+        currentLoginType = "Robotics";
+        currentPerson = new PersonObject();
+        button = (Button) findViewById(R.id.buttonManualSignIn);
         teamName = getIntent().getStringExtra("com.example.unit271.geofencetest1/MainActivity2");
         teamNameDisplay = (TextView) findViewById(R.id.textViewManualName);
         signInSelf = (Button) findViewById(R.id.buttonManualSignIn);
         teamNameDisplay.setText(teamName);
         signInSelf.setEnabled(false);
+        loginTypeSpinner = (Spinner) findViewById(R.id.loginTypeSpinner);
+        loginTypeSpinner.setEnabled(false);
+        ArrayList<String> spinnerTypeList = new ArrayList<>();
+        spinnerTypeList.clear();
+        spinnerTypeList.add("Robotics");
+        spinnerTypeList.add("FM");
+        spinnerTypeList.add("Competition");
+        ArrayAdapter<String> spinnerTypeAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, spinnerTypeList);
+        loginTypeSpinner.setAdapter(spinnerTypeAdapter);
+        loginTypeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                otherTypesLoginStatus.clear();
+                processSpinnerSelection(parent.getItemAtPosition(position).toString());
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                //Do Nothing
+            }
+        });
         mDatabase = FirebaseDatabase.getInstance().getReference();
         dataRef7 = mDatabase.child("People").child(teamName);
-        dataRef7.addValueEventListener(new ValueEventListener() {
+        mDatabase.child("People").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 for (DataSnapshot infoSnapshot : dataSnapshot.getChildren()) {
-                    if (infoSnapshot.getKey().equals("CurrentlySignedInRobotics")) {
-                        currentlySignedInRobotics = (boolean) infoSnapshot.getValue();
-                    }
-                    if (infoSnapshot.getKey().equals("TotalRobotics")){
-                        totalRoboticsTime = (int) infoSnapshot.getValue();
+                    Log.i("PERSONSEARCHSTRING", teamName);
+                    if (infoSnapshot.getKey().equals(teamName)) {
+                        Log.i("PERSONSEARCHSTRING", "FOUND");
+                        currentPerson = infoSnapshot.getValue(PersonObject.class);
+                        currentPerson.setPersonName(teamName);
+                        break;
                     }
                 }
+                totalRoboticsTime = currentPerson.getTotalRobotics();
+                totalFMTime = currentPerson.getTotalFM();
+                totalCompetitionTime = currentPerson.getTotalCompetition();
+                lastSignedInRobotics = currentPerson.getLastSignInRobotics();
+                lastSignedInFM = currentPerson.getLastSignInFM();
+                lastSignedInCompetition = currentPerson.getLastSignInCompetition();
+                loginTypeSpinner.setEnabled(true);
                 signInSelf.setEnabled(true);
-                setViews();
             }
 
             @Override
@@ -70,33 +108,93 @@ public class ManualSignIn extends AppCompatActivity {
         });
     }
 
-    public void setViews(){
-        if(currentlySignedInRobotics){
-            signInSelf.setText("SIGN OUT");
+    public void processSpinnerSelection(String spinnerSelection){
+        currentLoginType = spinnerSelection;
+        if(currentPerson == null){
+            Log.e("CURRENTPERSONIS", " NULL");
         } else {
-            signInSelf.setText("SIGN IN");
+            Log.e("CURRENTPERSONIS", " NOT NULL!");
         }
-        signInSelf.setTextColor(Color.BLACK);
+        if(currentLoginType.equals("Robotics")){
+            Log.i("LOGINTYPE", "ROBOTICS");
+            if(currentPerson.getLastSignInRobotics() != null){
+                signInSelf.setText("Sign Out");
+            } else {
+                signInSelf.setText("Sign In");
+                Log.i("LOGINTYPE", "SIGNIN");
+            }
+        } else if(currentLoginType.equals("FM")){
+            if(currentPerson.getLastSignInFM() != null){
+                signInSelf.setText("Sign Out");
+            } else {
+                signInSelf.setText("Sign In");
+            }
+        } else if(currentLoginType.equals("Competition")){
+            if(currentPerson.getLastSignInCompetition() != null){
+                signInSelf.setText("Sign Out");
+            } else {
+                signInSelf.setText("Sign In");
+            }
+        }
     }
 
-    public void onSignButtonClick2(View view){
+    public void onSignButtonClick2(View view) {
         Date date = new Date(System.currentTimeMillis());
 
         SimpleDateFormat uploadFormatter = new SimpleDateFormat("MM-dd-yyyy-HHmm", Locale.US);
         String uploadDate = uploadFormatter.format(date);
-
-        if(currentlySignedInRobotics){
-            dataRef7.child("CurrentlySignedInRobotics").setValue(false);
-            dataRef7.child("Logins").child(uploadDate).child("Status").setValue("Out");
-            dataRef7.child("Logins").child(uploadDate).child("Time").setValue(uploadDate);
-        } else {
-            LoginoutObject signSelfObject = new LoginoutObject();
-            signSelfObject.setTime(0);
-            signSelfObject.setAction("In");
-            dataRef7.child("CurrentlySignedInRobotics").setValue(true);
-            dataRef7.child("Logins").child(uploadDate).setValue(signSelfObject);
+        int finalDateInt = 0;
+        String currentTypeLastSignin = null;
+        int totalTime = 0;
+        otherTypesLoginStatus.clear();
+        if(currentLoginType.equals("Robotics")){
+            currentTypeLastSignin = lastSignedInRobotics;
+            totalTime = totalRoboticsTime;
+            otherTypesLoginStatus.add(lastSignedInCompetition);
+            otherTypesLoginStatus.add(lastSignedInFM);
+        } else if(currentLoginType.equals("FM")){
+            currentTypeLastSignin = lastSignedInFM;
+            totalTime = totalFMTime;
+            otherTypesLoginStatus.add(lastSignedInCompetition);
+            otherTypesLoginStatus.add(lastSignedInRobotics);
+        } else if(currentLoginType.equals("Competition")){
+            currentTypeLastSignin = lastSignedInCompetition;
+            totalTime = totalCompetitionTime;
+            otherTypesLoginStatus.add(lastSignedInRobotics);
+            otherTypesLoginStatus.add(lastSignedInFM);
         }
-        Intent returnIntent = new Intent(this, MainActivity.class);
-        startActivity(returnIntent);
+        Date lastDate = null;
+        try {
+            if(currentTypeLastSignin != null) {
+                lastDate = uploadFormatter.parse(currentTypeLastSignin);
+            }
+        } catch(ParseException pe){
+            pe.printStackTrace();
+        }
+        if(currentTypeLastSignin != null){
+            if (lastDate != null) {
+                finalDateInt = (int) (date.getTime() - lastDate.getTime());
+            }
+            dataRef7.child("Total" + currentLoginType).setValue(totalTime + (finalDateInt / (1000 * 60)));
+            dataRef7.child("LastSignIn" + currentLoginType).setValue(null);
+            dataRef7.child(currentLoginType + "Logs").child(currentTypeLastSignin).child("time").setValue(finalDateInt / (1000 * 60));
+            dataRef7.child(currentLoginType + "Logs").child(currentTypeLastSignin).child("status").setValue("Out");
+
+            Intent returnIntent = new Intent(this, MainActivity.class);
+            startActivity(returnIntent);
+        } else {
+            if(otherTypesLoginStatus.get(0) == null && otherTypesLoginStatus.get(1) == null) {
+                LoginoutObject signSelfObject = new LoginoutObject();
+                signSelfObject.setTime(0);
+                signSelfObject.setStatus("In");
+                dataRef7.child("LastSignIn" + currentLoginType).setValue(uploadDate);
+                dataRef7.child(currentLoginType + "Logs").child(uploadDate).setValue(signSelfObject);
+
+                Intent returnIntent = new Intent(this, MainActivity.class);
+                startActivity(returnIntent);
+            } else {
+                Toast.makeText(getBaseContext(), "Please Sign Out of Your Current Activity First.", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 }

@@ -66,12 +66,9 @@ public class CreateNewPerson extends AppCompatActivity {
                 }
             }
             if(newPersonFirebase){
-                dataRef5.child("People").child(newName).child("CurrentlySignedInRobotics").setValue(false);
-                dataRef5.child("People").child(newName).child("CurrentlySignedInFM").setValue(false);
-                dataRef5.child("People").child(newName).child("CurrentlySignedInCompetition").setValue(false);
-                dataRef5.child("People").child(newName).child("SubtractHoursRobotics").setValue(0);
-                dataRef5.child("People").child(newName).child("SubtractHoursCompetition").setValue(0);
-                dataRef5.child("People").child(newName).child("SubtractHoursFM").setValue(0);
+                dataRef5.child("People").child(newName).child("LastSigninRobotics").setValue(null);
+                dataRef5.child("People").child(newName).child("LastSigninFM").setValue(null);
+                dataRef5.child("People").child(newName).child("LastSigninCompetition").setValue(null);
                 dataRef5.child("People").child(newName).child("Password").setValue(newPassword);
                 dataRef5.child("People").child(newName).child("TotalRobotics").setValue(0);
                 dataRef5.child("People").child(newName).child("TotalFM").setValue(0);

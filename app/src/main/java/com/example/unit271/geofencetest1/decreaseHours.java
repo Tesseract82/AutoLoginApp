@@ -21,7 +21,7 @@ public class decreaseHours extends AppCompatActivity {
     EditText decreaseHoursText, decreaseHoursTextFM, decreaseHoursTextCompetition;
     Button decreaseHoursButton;
     DatabaseReference dataRef6, dataBase;
-    int SubtractHoursRobotics, SubtractHoursFM, SubtractHoursCompetition;
+    int TotalRobotics, TotalFM, TotalCompetition;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,9 +32,9 @@ public class decreaseHours extends AppCompatActivity {
         teamID = getIntent().getStringExtra("com.example.unit271.geofencetest1/MainActivity");
         dataBase = FirebaseDatabase.getInstance().getReference();
         dataRef6 = dataBase.child("People").child(teamID);
-        SubtractHoursRobotics = 0;
-        SubtractHoursCompetition = 0;
-        SubtractHoursFM = 0;
+        TotalRobotics = 0;
+        TotalCompetition = 0;
+        TotalFM = 0;
         decreaseHoursText = (EditText) findViewById(R.id.hoursEditText);
         decreaseHoursTextFM = (EditText) findViewById(R.id.hoursEditTextFM);
         decreaseHoursTextCompetition = (EditText) findViewById(R.id.hoursEditTextCompetition);
@@ -44,14 +44,14 @@ public class decreaseHours extends AppCompatActivity {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 for (DataSnapshot infoSnapshot2: dataSnapshot.getChildren()) {
-                    if(infoSnapshot2.getKey().equals("SubtractHoursRobotics")){
-                        SubtractHoursRobotics = ((Long) infoSnapshot2.getValue()).intValue();
+                    if(infoSnapshot2.getKey().equals("TotalRobotics")){
+                        TotalRobotics = ((Long) infoSnapshot2.getValue()).intValue();
                     }
-                    if(infoSnapshot2.getKey().equals("SubtractHoursFM")){
-                        SubtractHoursFM = ((Long) infoSnapshot2.getValue()).intValue();
+                    if(infoSnapshot2.getKey().equals("TotalFM")){
+                        TotalFM = ((Long) infoSnapshot2.getValue()).intValue();
                     }
-                    if(infoSnapshot2.getKey().equals("SubtractHoursCompetition")){
-                        SubtractHoursCompetition = ((Long) infoSnapshot2.getValue()).intValue();
+                    if(infoSnapshot2.getKey().equals("TotalCompetition")){
+                        TotalCompetition = ((Long) infoSnapshot2.getValue()).intValue();
                     }
                 }
                 decreaseHoursButton.setEnabled(true);
@@ -89,19 +89,13 @@ public class decreaseHours extends AppCompatActivity {
         }
         if(intValRobotics >= 0 && intValFM >= 0 && intValCompetition >= 0 && !numFormatException) {
             if (!strValRobotics.equals("")) {
-                dataRef6.child("SubtractHoursRobotics").setValue(SubtractHoursRobotics + intValRobotics);
-            } else {
-                dataRef6.child("SubtractHoursRobotics").setValue(SubtractHoursRobotics);
+                dataRef6.child("SubtractHoursRobotics").setValue(TotalRobotics - intValRobotics);
             }
             if (!strValFM.equals("")) {
-                dataRef6.child("SubtractHoursFM").setValue(SubtractHoursFM + intValFM);
-            } else {
-                dataRef6.child("SubtractHoursFM").setValue(SubtractHoursFM);
+                dataRef6.child("SubtractHoursFM").setValue(TotalFM - intValFM);
             }
             if (!strValCompetition.equals("")) {
-                dataRef6.child("SubtractHoursCompetition").setValue(SubtractHoursCompetition + intValCompetition);
-            } else {
-                dataRef6.child("SubtractHoursCompetition").setValue(SubtractHoursCompetition);
+                dataRef6.child("SubtractHoursCompetition").setValue(TotalCompetition - intValCompetition);
             }
             Intent returnIntent = new Intent(this, MainActivity.class);
             startActivity(returnIntent);

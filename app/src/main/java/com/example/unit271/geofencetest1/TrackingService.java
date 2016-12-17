@@ -34,6 +34,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -72,6 +73,8 @@ public class TrackingService extends Service implements
     NotificationManager mNotificationManager;
     DatabaseReference connectedRef;
     public boolean stillConnected;
+    public String LastSigninRobotics;
+    int totalRoboticsTime;
 
     @Override
     public void onCreate() {
@@ -94,27 +97,27 @@ public class TrackingService extends Service implements
         teamID = teamNumData.getString("newIDKey", "NONE");
         mDatabase = FirebaseDatabase.getInstance().getReference();
         personDirectory = mDatabase.child("People").child(teamID);
-
-        connectedRef = mDatabase.child(".info").child("connected");
-        connectedRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                boolean connected = dataSnapshot.getValue(Boolean.class);
-                if (connected) {
-                    stillConnected = true;
-                } else {
-                    stillConnected = false;
-                    SharedPreferences.Editor editor = teamNumData.edit();
-                    editor.putBoolean("setInitialRange", true);
-                    editor.commit();
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
+        stillConnected = true;
+//        connectedRef = mDatabase.child(".info").child("connected");
+//        connectedRef.addValueEventListener(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(DataSnapshot dataSnapshot) {
+//                boolean connected = dataSnapshot.getValue(Boolean.class);
+//                if (connected) {
+//                    stillConnected = true;
+//                } else {
+//                    stillConnected = false;
+//                    SharedPreferences.Editor editor = teamNumData.edit();
+//                    editor.putBoolean("setInitialRange", true);
+//                    editor.commit();
+//                }
+//            }
+//
+//            @Override
+//            public void onCancelled(DatabaseError databaseError) {
+//
+//            }
+//        });
 
         personListener();
 
@@ -417,17 +420,31 @@ public class TrackingService extends Service implements
                 Date date = new Date(System.currentTimeMillis());
                 SimpleDateFormat uploadFormatter = new SimpleDateFormat("MM-dd-yyyy-HHmm", Locale.US);
                 String uploadDate = uploadFormatter.format(date);
-                LoginoutObject loginout = new LoginoutObject();
-                loginout.setTime(uploadDate);
-                loginout.setLocation("Robotics");
-                if(tmpRangeCheckerA){
-                    loginout.setAction("In");
-                    mDatabase.child("People").child(tmpTeamID).child("CurrentlySignedInRobotics").setValue(true);
-                } else {
-                    loginout.setAction("Out");
-                    mDatabase.child("People").child(tmpTeamID).child("CurrentlySignedInRobotics").setValue(false);
+                Date lastDate = null;
+                try {
+                    if(LastSigninRobotics != null) {
+                        lastDate = uploadFormatter.parse(LastSigninRobotics);
+                    }
+                } catch(ParseException pe){
+                    pe.printStackTrace();
                 }
-                mDatabase.child("People").child(tmpTeamID).child("Logins").push().setValue(loginout);
+                int finalDateInt = 0;
+                if(LastSigninRobotics != null){
+                    if(lastDate != null) {
+                        finalDateInt = (int) (date.getTime() - lastDate.getTime());
+                    }
+                    personDirectory.child("TotalRobotics").setValue(totalRoboticsTime + (finalDateInt / (1000*60)));
+                    personDirectory.child("LastSigninRobotics").setValue(null);
+                    personDirectory.child("RoboticsLogs").child(uploadDate).child("Time").setValue(finalDateInt / (1000*60));
+                    personDirectory.child("RoboticsLogs").child(uploadDate).child("Status").setValue("Out");
+                } else {
+                    LoginoutObject signSelfObject = new LoginoutObject();
+                    signSelfObject.setTime(0);
+                    signSelfObject.setStatus("In");
+                    personDirectory.child("LastSigninRobotics").setValue(uploadDate);
+                    personDirectory.child("RoboticsLogs").child(uploadDate).setValue(signSelfObject);
+                }
+
             }
         }.start();
     }
@@ -447,15 +464,28 @@ public class TrackingService extends Service implements
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 for (DataSnapshot infoSnapshot : dataSnapshot.getChildren()) {
-                    if (infoSnapshot.getKey().equals("CurrentlySignedInRobotics")) {
-                        rangeCheckerB = (boolean) infoSnapshot.getValue();
+                    if (infoSnapshot.getKey().equals("LastSigninRobotics")) {
+                        LastSigninRobotics = infoSnapshot.getValue().toString();
+                        if(infoSnapshot.getValue() != null) {
+                            rangeCheckerB = true;
+                        } else {
+                            rangeCheckerB = false;
+                        } //TODO: fix manual signin, only notification should disable this, otherwise
+                        //TODO : always change rangeCheckerA to infosnapshot
                         if (teamNumData.getBoolean("setInitialRange", true)) { //Return true after first use
                             SharedPreferences.Editor editor = teamNumData.edit();
-                            editor.putBoolean("rangeBoolean", (boolean) infoSnapshot.getValue());
+                            if(infoSnapshot.getValue() != null){
+                                editor.putBoolean("rangeBoolean", true);
+                            } else {
+                                editor.putBoolean("rangeBoolean", false);
+                            }
                             editor.putBoolean("setInitialRange", false);
                             editor.commit();
                             Log.i("INITIALRANGEA", String.valueOf(teamNumData.getBoolean("rangeBoolean", false)));
                         }
+                    }
+                    if (infoSnapshot.getKey().equals("TotalRobotics")){
+                        totalRoboticsTime = ((Long) infoSnapshot.getValue()).intValue();
                     }
                 }
                 stillConnected = true;

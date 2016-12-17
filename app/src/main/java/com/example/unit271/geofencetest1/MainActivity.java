@@ -84,11 +84,11 @@ public class MainActivity extends FragmentActivity {
 
         teamID = teamNumData.getString("newIDKey", "NONE");
         mDatabase = FirebaseDatabase.getInstance().getReference();
-        fbRef1 = mDatabase.child("People").child(teamID).child("CurrentlySignedInRobotics");
+        fbRef1 = mDatabase.child("People").child(teamID).child("LastSigninRobotics");
         fbRef1.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                if((boolean) dataSnapshot.getValue()){
+                if(dataSnapshot.getValue() != null){
                     manualButton.setText("Sign Out");
                 } else {
                     manualButton.setText("Sign In");
