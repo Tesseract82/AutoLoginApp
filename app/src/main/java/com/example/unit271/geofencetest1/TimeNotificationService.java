@@ -1,4 +1,4 @@
-package com.example.unit271.geofencetest1.com.example.unit271.geofencetest1;
+package com.example.unit271.geofencetest1;
 
 import android.annotation.TargetApi;
 import android.app.NotificationManager;
@@ -23,18 +23,25 @@ public class TimeNotificationService extends Service {
     public static String filename = "NumberHolder";
     SharedPreferences teamNumData;
 
+    @Override
+    public void onCreate() {
+        super.onCreate();
+    }
+
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId){
+    public int onStartCommand(Intent intent, int flags, int startId){ //TODO : Stop service if person logs out?
+        super.onStartCommand(intent, flags, startId);
         teamNumData = getSharedPreferences(filename, 0);
-
-        Uri alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-        NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        final NotificationCompat.Builder timeBuilder = new NotificationCompat.Builder(this);
+        Log.i("TIMENOTIFICATIONSERVICE", "ONSTARTCOMMAND");
+        final Uri alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+        final NotificationManager mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        final NotificationCompat.Builder timeBuilder = new NotificationCompat.Builder(getBaseContext());
         timeBuilder.setContentTitle("Robotics Logout Reminder");
         timeBuilder.setContentText("Remember to log out if you are leaving or have left.");
         timeBuilder.setSound(alarmSound);
         timeBuilder.setLights(Color.GREEN, 500, 1000);
+        timeBuilder.setSmallIcon(R.drawable.doublecheck);
 
         int notifHours = teamNumData.getInt("notifHours", 0);
         int notifMinutes = teamNumData.getInt("notifMinutes", 0);
@@ -48,7 +55,7 @@ public class TimeNotificationService extends Service {
 
             @Override
             public void onFinish() {
-                timeBuilder.notify();
+                mNotificationManager.notify(0, timeBuilder.build());
                 stopSelf();
             }
         };

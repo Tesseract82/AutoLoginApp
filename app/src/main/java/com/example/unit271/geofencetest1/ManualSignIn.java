@@ -21,7 +21,6 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.unit271.geofencetest1.com.example.unit271.geofencetest1.TimeNotificationService;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -47,7 +46,7 @@ public class ManualSignIn extends AppCompatActivity {
     int totalRoboticsTime, totalFMTime, totalCompetitionTime;
     Button button;
     Spinner loginTypeSpinner;
-    TextView hoursText, minutesText;
+    EditText hoursText, minutesText;
     PersonObject currentPerson;
     ArrayList<String> otherTypesLoginStatus;
     Context appContext;
@@ -206,13 +205,18 @@ public class ManualSignIn extends AppCompatActivity {
                 AlertDialog.Builder timeDialogBuilder = new AlertDialog.Builder(appContext);
                 LinearLayout timeHolder = new LinearLayout(this);
 
-                hoursText = new TextView(this);
+                hoursText = new EditText(this);
                 hoursText.setTextColor(Color.BLACK);
+                hoursText.setTextSize(35);
                 hoursText.setHint("HH");
                 hoursText.setInputType(InputType.TYPE_CLASS_NUMBER);
-                minutesText = new TextView(this);
+                hoursText.setEnabled(true);
+                minutesText = new EditText(this);
                 minutesText.setTextColor(Color.BLACK);
+                minutesText.setTextSize(35);
                 minutesText.setHint("mm");
+                minutesText.setInputType(InputType.TYPE_CLASS_NUMBER);
+                minutesText.setEnabled(true);
                 TextView timeDialogTitle = new TextView(this);
                 timeDialogTitle.setText("How Long do You Expect to Stay?");
                 timeDialogTitle.setTextColor(Color.BLACK);
@@ -220,17 +224,28 @@ public class ManualSignIn extends AppCompatActivity {
 
                 timeHolder.addView(hoursText);
                 timeHolder.addView(minutesText);
+                timeDialogBuilder.setView(timeHolder);
                 timeDialogBuilder.setCancelable(true).setCustomTitle(timeDialogTitle).setPositiveButton("Ok", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+                        int hoursInt = 0;
+                        int minutesInt = 0;
+                        if(!hoursText.getText().toString().equals("")) {
+                            hoursInt = Integer.valueOf(hoursText.getText().toString());
+                        }
+                        if(!minutesText.getText().toString().equals("")) {
+                            minutesInt = Integer.valueOf(minutesText.getText().toString());
+                        }
                         SharedPreferences.Editor editor = teamNumData.edit();
-                        editor.putInt("notifHours", Integer.valueOf(hoursText.getText().toString()));
-                        editor.putInt("notifMinutes", Integer.valueOf(minutesText.getText().toString()));
+                        editor.putInt("notifHours", hoursInt);
+                        editor.putInt("notifMinutes", minutesInt);
                         editor.commit();
                         dialog.dismiss();
                         returnHome();
                     }
                 });
+                AlertDialog timeDialog = timeDialogBuilder.create();
+                timeDialog.show();
             } else {
                 Toast.makeText(getBaseContext(), "Please Sign Out of Your Current Activity First.", Toast.LENGTH_SHORT).show();
             }
@@ -240,7 +255,7 @@ public class ManualSignIn extends AppCompatActivity {
     public void returnHome(){
         Intent timeServiceIntent = new Intent(this, TimeNotificationService.class);
         Intent returnIntent = new Intent(this, MainActivity.class);
-        startActivity(timeServiceIntent);
+        startService(timeServiceIntent);
         startActivity(returnIntent);
     }
 }

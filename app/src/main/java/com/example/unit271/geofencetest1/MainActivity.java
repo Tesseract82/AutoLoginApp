@@ -167,7 +167,7 @@ public class MainActivity extends FragmentActivity {
         return i;
     }
 
-    public void onAvgClick(){
+    public void onAvgClick(View view){
         final SimpleDateFormat dateFormatter = new SimpleDateFormat("MM-dd-yyyy-HHmm", Locale.US);
         final DatabaseReference fbRef2 = mDatabase.child("People").child(teamID).child("RoboticsLogs");
         fbRef2.addValueEventListener(new ValueEventListener() {
@@ -182,6 +182,7 @@ public class MainActivity extends FragmentActivity {
                     break;
                 }
                 fbRef2.removeEventListener(this);
+                displayAverage();
             }
 
             @Override
@@ -189,13 +190,19 @@ public class MainActivity extends FragmentActivity {
 
             }
         });
+    }
+
+    public void displayAverage(){
         lastDate = System.currentTimeMillis();
         if(firstDate != null && lastDate != null) {
             Long timeDifference = lastDate - firstDate;
             Long timeDifferenceHrs = (timeDifference / (1000 * 60 * 60));
             double timeDifferenceWeeks = timeDifferenceHrs / (24 * 7);
             double netAttendanceHrs = ((totalRobotics + totalFM + totalCompetition) / 60);
-            double hoursPerWeek = (netAttendanceHrs / timeDifferenceWeeks);
+            double hoursPerWeek = 0;
+            if(timeDifferenceWeeks != 0){
+                hoursPerWeek = (netAttendanceHrs / timeDifferenceWeeks);
+            }
             AlertDialog.Builder HPWBuilder = new AlertDialog.Builder(appContext);
             TextView customTitleView = new TextView(this);
             customTitleView.setText("Average Hours Per Week");
@@ -204,12 +211,15 @@ public class MainActivity extends FragmentActivity {
             TextView hoursTimeView = new TextView(this);
             hoursTimeView.setText(String.valueOf(hoursPerWeek));
             hoursTimeView.setTextColor(Color.MAGENTA);
+            HPWBuilder.setView(hoursTimeView);
             HPWBuilder.setCancelable(true).setCustomTitle(customTitleView).setPositiveButton("Ok", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     dialog.dismiss();
                 }
             });
+            AlertDialog HPWDialog = HPWBuilder.create();
+            HPWDialog.show();
         }
     }
 

@@ -27,6 +27,9 @@
         <service
             android:name=".NotificationLogOut"
             android:exported="false" />
+        <service
+            android:name=".TimeNotificationService"
+            android:exported="false" />
 
         <activity android:name=".ChangeTeamNumber" />
         <activity android:name=".signInOther" />

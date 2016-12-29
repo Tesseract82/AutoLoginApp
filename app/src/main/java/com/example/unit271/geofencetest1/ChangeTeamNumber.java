@@ -5,7 +5,9 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.RadioButton;
@@ -45,6 +47,8 @@ public class ChangeTeamNumber extends AppCompatActivity {
         setContentView(R.layout.activity_change_team_num);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         setTitle("Setup");
+        final Button saveButton = (Button) findViewById(R.id.saveButton);
+        saveButton.setEnabled(false);
         existingPeople = new ArrayList<>();
         existingPeople.clear();
         nameChangeDatabase = FirebaseDatabase.getInstance().getReference();
@@ -56,6 +60,7 @@ public class ChangeTeamNumber extends AppCompatActivity {
                     existingPerson.setPersonName(personSnapshot.getKey());
                     existingPeople.add(existingPerson);
                 }
+                saveButton.setEnabled(true);
             }
 
             @Override
@@ -63,7 +68,6 @@ public class ChangeTeamNumber extends AppCompatActivity {
 
             }
         });
-        // TODO : MAKE NAME CHANGABLE ADD FIREBASE LINK AND LISTENER
         cb1 = (CheckBox) findViewById(R.id.checkPer1);
         cb6 = (CheckBox) findViewById(R.id.checkPer6);
         cb7 = (CheckBox) findViewById(R.id.checkPer7);
@@ -75,6 +79,7 @@ public class ChangeTeamNumber extends AppCompatActivity {
         free7 = teamNumData.getBoolean("free7", false);
         schoolName = teamNumData.getString("schoolName", "none");
 
+        changeName = (TextView) findViewById(R.id.changeNumEdtTxt);
         changeName.setText(teamID);
 
         cb1.setChecked(free1);
@@ -106,15 +111,28 @@ public class ChangeTeamNumber extends AppCompatActivity {
 
     public void onSaveClick(View view){
         if(changeName.getText() != teamID){
+            Log.i("CHANGENAME", "NPF=TRUE");
             boolean createNewPersonFirebase = true;
             for(int a = 0; a <= existingPeople.size() - 1; a++){
                 if(changeName.getText().equals(existingPeople.get(a).getPersonName())){
                     createNewPersonFirebase = false;
+                    Log.i("CHANGENAME", "NPF=FALSE");
                 }
             }
-            if(createNewPersonFirebase){
-                nameChangeDatabase.child(changeName.getText().toString()).setValue(nameChangeDatabase.child(teamID));
-                nameChangeDatabase.child(teamID).setValue(null);
+            if(createNewPersonFirebase){    //TODO : MAKE NEW THREAD HERE!
+                new Thread(){
+                    @Override
+                    public void run() {
+                        super.run();
+                        Log.i("CHANGENAME", "NPF=INPROGRESS");
+                        nameChangeDatabase.child(changeName.getText().toString()).setValue(nameChangeDatabase.child(teamID));
+                        nameChangeDatabase.child(teamID).setValue(null);
+                        Log.i("CHANGENAME", "NPF=COMPLETE");
+                        SharedPreferences.Editor editor = teamNumData.edit();
+                        editor.putString("newIDKey", changeName.getText().toString());
+                        editor.commit();
+                    }
+                }.start();
             }
         }
         SharedPreferences.Editor editor = teamNumData.edit();
@@ -130,7 +148,6 @@ public class ChangeTeamNumber extends AppCompatActivity {
         editor.putBoolean("free1", cb1.isChecked());
         editor.putBoolean("free6", cb6.isChecked());
         editor.putBoolean("free7", cb7.isChecked());
-        editor.putString("newIDKey", changeName.getText().toString());
 
         if(!teamNumData.getBoolean("setupComplete", false)) {
             editor.putBoolean("setupComplete", true);
