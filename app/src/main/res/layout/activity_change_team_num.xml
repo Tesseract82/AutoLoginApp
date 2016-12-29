@@ -159,14 +159,11 @@
         android:checked="false"
         />
 
-    <TextView
+    <EditText
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/changeNumTxtVw"
-        android:textSize="25sp"
-        android:layout_alignBottom="@+id/newId"
-        android:layout_toRightOf="@+id/newId"
-        android:layout_toEndOf="@+id/newId"
-        android:textColor="#000000" />
+        android:id="@+id/changeNumEdtTxt"
+        android:layout_above="@+id/schoolView"
+        android:layout_toRightOf="@+id/newId" />
 
 </RelativeLayout>

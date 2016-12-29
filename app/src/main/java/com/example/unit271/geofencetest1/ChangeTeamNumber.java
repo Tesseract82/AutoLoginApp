@@ -7,9 +7,18 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.CheckBox;
+import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
+
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
+import java.util.ArrayList;
 
 public class ChangeTeamNumber extends AppCompatActivity {
 
@@ -20,11 +29,15 @@ public class ChangeTeamNumber extends AppCompatActivity {
     private CheckBox cb7;
     private CheckBox cb6;
     private CheckBox cb1;
+    ArrayList<PersonObject> existingPeople;
     Boolean free1;
     Boolean free6;
     Boolean free7;
     String schoolName;
     RadioButton rb;
+    TextView changeName;
+    DatabaseReference nameChangeDatabase;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,7 +45,25 @@ public class ChangeTeamNumber extends AppCompatActivity {
         setContentView(R.layout.activity_change_team_num);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         setTitle("Setup");
+        existingPeople = new ArrayList<>();
+        existingPeople.clear();
+        nameChangeDatabase = FirebaseDatabase.getInstance().getReference();
+        nameChangeDatabase.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for (DataSnapshot personSnapshot: dataSnapshot.getChildren()) {
+                    PersonObject existingPerson = personSnapshot.getValue(PersonObject.class);
+                    existingPerson.setPersonName(personSnapshot.getKey());
+                    existingPeople.add(existingPerson);
+                }
+            }
 
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+        // TODO : MAKE NAME CHANGABLE ADD FIREBASE LINK AND LISTENER
         cb1 = (CheckBox) findViewById(R.id.checkPer1);
         cb6 = (CheckBox) findViewById(R.id.checkPer6);
         cb7 = (CheckBox) findViewById(R.id.checkPer7);
@@ -43,6 +74,8 @@ public class ChangeTeamNumber extends AppCompatActivity {
         free6 = teamNumData.getBoolean("free6", false);
         free7 = teamNumData.getBoolean("free7", false);
         schoolName = teamNumData.getString("schoolName", "none");
+
+        changeName.setText(teamID);
 
         cb1.setChecked(free1);
         cb6.setChecked(free6);
@@ -69,11 +102,21 @@ public class ChangeTeamNumber extends AppCompatActivity {
         } else if(schoolName.equals("none")){
         }
 
-        TextView et = (TextView) findViewById(R.id.changeNumTxtVw);
-        et.setText(teamID);
     }
 
     public void onSaveClick(View view){
+        if(changeName.getText() != teamID){
+            boolean createNewPersonFirebase = true;
+            for(int a = 0; a <= existingPeople.size() - 1; a++){
+                if(changeName.getText().equals(existingPeople.get(a).getPersonName())){
+                    createNewPersonFirebase = false;
+                }
+            }
+            if(createNewPersonFirebase){
+                nameChangeDatabase.child(changeName.getText().toString()).setValue(nameChangeDatabase.child(teamID));
+                nameChangeDatabase.child(teamID).setValue(null);
+            }
+        }
         SharedPreferences.Editor editor = teamNumData.edit();
         RadioGroup rGroup = (RadioGroup) findViewById(R.id.radioGroup1);
         if(rGroup.getCheckedRadioButtonId() != -1){
@@ -87,6 +130,7 @@ public class ChangeTeamNumber extends AppCompatActivity {
         editor.putBoolean("free1", cb1.isChecked());
         editor.putBoolean("free6", cb6.isChecked());
         editor.putBoolean("free7", cb7.isChecked());
+        editor.putString("newIDKey", changeName.getText().toString());
 
         if(!teamNumData.getBoolean("setupComplete", false)) {
             editor.putBoolean("setupComplete", true);

@@ -115,4 +115,13 @@
         android:layout_centerHorizontal="true"
         android:onClick="onNewProfClick" />
 
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Calc Avg."
+        android:id="@+id/averageButton"
+        android:layout_above="@+id/newProfButton"
+        android:layout_centerHorizontal="true"
+        android:onClick="onAvgClick" />
+
 </RelativeLayout>

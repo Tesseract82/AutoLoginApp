@@ -1,19 +1,27 @@
 package com.example.unit271.geofencetest1;
 
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.graphics.Color;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.InputType;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.unit271.geofencetest1.com.example.unit271.geofencetest1.TimeNotificationService;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -28,6 +36,8 @@ import java.util.Locale;
 
 public class ManualSignIn extends AppCompatActivity {
 
+    public static String filename = "NumberHolder";
+    SharedPreferences teamNumData;
     String teamName;
     String currentLoginType;
     TextView teamNameDisplay;
@@ -37,8 +47,10 @@ public class ManualSignIn extends AppCompatActivity {
     int totalRoboticsTime, totalFMTime, totalCompetitionTime;
     Button button;
     Spinner loginTypeSpinner;
+    TextView hoursText, minutesText;
     PersonObject currentPerson;
     ArrayList<String> otherTypesLoginStatus;
+    Context appContext;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +59,8 @@ public class ManualSignIn extends AppCompatActivity {
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
         setTitle("Automatic Login App");
+        teamNumData = getSharedPreferences(filename, 0);
+        appContext = this;
         otherTypesLoginStatus = new ArrayList<>();
         currentLoginType = "Robotics";
         currentPerson = new PersonObject();
@@ -189,12 +203,44 @@ public class ManualSignIn extends AppCompatActivity {
                 signSelfObject.setStatus("In");
                 dataRef7.child("LastSignIn" + currentLoginType).setValue(uploadDate);
                 dataRef7.child(currentLoginType + "Logs").child(uploadDate).setValue(signSelfObject);
+                AlertDialog.Builder timeDialogBuilder = new AlertDialog.Builder(appContext);
+                LinearLayout timeHolder = new LinearLayout(this);
 
-                Intent returnIntent = new Intent(this, MainActivity.class);
-                startActivity(returnIntent);
+                hoursText = new TextView(this);
+                hoursText.setTextColor(Color.BLACK);
+                hoursText.setHint("HH");
+                hoursText.setInputType(InputType.TYPE_CLASS_NUMBER);
+                minutesText = new TextView(this);
+                minutesText.setTextColor(Color.BLACK);
+                minutesText.setHint("mm");
+                TextView timeDialogTitle = new TextView(this);
+                timeDialogTitle.setText("How Long do You Expect to Stay?");
+                timeDialogTitle.setTextColor(Color.BLACK);
+                timeDialogTitle.setTextSize(20);
+
+                timeHolder.addView(hoursText);
+                timeHolder.addView(minutesText);
+                timeDialogBuilder.setCancelable(true).setCustomTitle(timeDialogTitle).setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        SharedPreferences.Editor editor = teamNumData.edit();
+                        editor.putInt("notifHours", Integer.valueOf(hoursText.getText().toString()));
+                        editor.putInt("notifMinutes", Integer.valueOf(minutesText.getText().toString()));
+                        editor.commit();
+                        dialog.dismiss();
+                        returnHome();
+                    }
+                });
             } else {
                 Toast.makeText(getBaseContext(), "Please Sign Out of Your Current Activity First.", Toast.LENGTH_SHORT).show();
             }
         }
+    }
+
+    public void returnHome(){
+        Intent timeServiceIntent = new Intent(this, TimeNotificationService.class);
+        Intent returnIntent = new Intent(this, MainActivity.class);
+        startActivity(timeServiceIntent);
+        startActivity(returnIntent);
     }
 }

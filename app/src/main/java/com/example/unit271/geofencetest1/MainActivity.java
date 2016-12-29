@@ -2,10 +2,14 @@ package com.example.unit271.geofencetest1;
 
 import android.Manifest;
 import android.annotation.TargetApi;
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.CountDownTimer;
 import android.support.v4.app.ActivityCompat;
@@ -24,21 +28,28 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Locale;
+
 
 public class MainActivity extends FragmentActivity {
 
     SharedPreferences teamNumData;
+    Long firstDate, lastDate;
     private String teamID;
     private TextView numView;
     public boolean switchPermission;
     public boolean buttonPermission;
     public boolean startPerm;
     public Switch locationSwitch;
+    public int totalRobotics, totalFM, totalCompetition;
     public static String filename = "NumberHolder";
     private DatabaseReference mDatabase, fbRef1;
     public Button manualButton;
     CountDownTimer dTimer2;
     boolean countingDown;
+    Context appContext;
 
     @TargetApi(Build.VERSION_CODES.M)
     @Override
@@ -55,6 +66,7 @@ public class MainActivity extends FragmentActivity {
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         teamNumData = getSharedPreferences(filename, 0);
         setTitle("Citrus Circuits");
+        appContext = this;
 
         manualButton = (Button) findViewById(R.id.manualButton);
         numView = (TextView) findViewById(R.id.teamNumView2);
@@ -84,22 +96,7 @@ public class MainActivity extends FragmentActivity {
 
         teamID = teamNumData.getString("newIDKey", "NONE");
         mDatabase = FirebaseDatabase.getInstance().getReference();
-        fbRef1 = mDatabase.child("People").child(teamID).child("LastSigninRobotics");
-        fbRef1.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                if(dataSnapshot.getValue() != null){
-                    manualButton.setText("Sign Out");
-                } else {
-                    manualButton.setText("Sign In");
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
+        manualButton.setText("Sign In");
         if(teamID.equals("NONE")){
             startPerm = false;
             numView.setText("No Name");
@@ -120,6 +117,24 @@ public class MainActivity extends FragmentActivity {
         if(startPerm && buttonPermission && switchPermission){
             startService();
         }
+
+        DatabaseReference fbRef1 = mDatabase.child("People").child(teamID);
+        fbRef1.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                PersonObject self = new PersonObject();
+                self = dataSnapshot.getValue(PersonObject.class);
+                self.setPersonName(dataSnapshot.getKey());
+                totalRobotics = self.getTotalRobotics();
+                totalFM = self.getTotalFM();
+                totalCompetition = self.getTotalCompetition();
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
 
     }
     @Override
@@ -150,6 +165,52 @@ public class MainActivity extends FragmentActivity {
         stopService(i);
         Log.i("INITIALIZATION", "SERVICE STOPPED");
         return i;
+    }
+
+    public void onAvgClick(){
+        final SimpleDateFormat dateFormatter = new SimpleDateFormat("MM-dd-yyyy-HHmm", Locale.US);
+        final DatabaseReference fbRef2 = mDatabase.child("People").child(teamID).child("RoboticsLogs");
+        fbRef2.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {   //TODO: ask how to calculate weeks, and test what happens if no logins
+                for(DataSnapshot childSnapshot : dataSnapshot.getChildren()){
+                    try {
+                        firstDate = dateFormatter.parse(childSnapshot.getKey()).getTime();
+                    } catch(ParseException pe){
+                        pe.printStackTrace();
+                    }
+                    break;
+                }
+                fbRef2.removeEventListener(this);
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+        lastDate = System.currentTimeMillis();
+        if(firstDate != null && lastDate != null) {
+            Long timeDifference = lastDate - firstDate;
+            Long timeDifferenceHrs = (timeDifference / (1000 * 60 * 60));
+            double timeDifferenceWeeks = timeDifferenceHrs / (24 * 7);
+            double netAttendanceHrs = ((totalRobotics + totalFM + totalCompetition) / 60);
+            double hoursPerWeek = (netAttendanceHrs / timeDifferenceWeeks);
+            AlertDialog.Builder HPWBuilder = new AlertDialog.Builder(appContext);
+            TextView customTitleView = new TextView(this);
+            customTitleView.setText("Average Hours Per Week");
+            customTitleView.setTextColor(Color.BLACK);
+            customTitleView.setTextSize(20);
+            TextView hoursTimeView = new TextView(this);
+            hoursTimeView.setText(String.valueOf(hoursPerWeek));
+            hoursTimeView.setTextColor(Color.MAGENTA);
+            HPWBuilder.setCancelable(true).setCustomTitle(customTitleView).setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.dismiss();
+                }
+            });
+        }
     }
 
     public void changeNumber(View view){
