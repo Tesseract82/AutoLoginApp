@@ -211,7 +211,7 @@ public class MainActivity extends FragmentActivity {
             TextView hoursTimeView = new TextView(this);
             hoursTimeView.setText(String.valueOf(hoursPerWeek));
             hoursTimeView.setTextColor(Color.MAGENTA);
-            HPWBuilder.setView(hoursTimeView);
+            HPWBuilder.setView(hoursTimeView);  //TODO : make alert dialogs uncancelable
             HPWBuilder.setCancelable(true).setCustomTitle(customTitleView).setPositiveButton("Ok", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {

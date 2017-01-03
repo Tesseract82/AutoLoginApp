@@ -112,6 +112,7 @@ public class ManualSignIn extends AppCompatActivity {
                 lastSignedInCompetition = currentPerson.getLastSignInCompetition();
                 loginTypeSpinner.setEnabled(true);
                 signInSelf.setEnabled(true);
+                setViews(); //Necessary for initial setting, which is why it only checks Robotics
             }
 
             @Override
@@ -149,6 +150,15 @@ public class ManualSignIn extends AppCompatActivity {
                 signInSelf.setText("Sign In");
             }
         }
+    }
+
+    public void setViews(){
+        if(lastSignedInRobotics != null && currentLoginType.equals("Robotics")){
+            signInSelf.setText("Sign Out");
+        } else if(currentLoginType.equals("Robotics")) {
+            signInSelf.setText("Sign In");
+        }
+        signInSelf.setTextColor(Color.BLACK);
     }
 
     public void onSignButtonClick2(View view) {
