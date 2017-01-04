@@ -122,7 +122,7 @@ public class MainActivity extends FragmentActivity {
 //            startService();
         }
 
-        DatabaseReference fbRef1 = mDatabase.child("People").child(teamID);
+        DatabaseReference fbRef1 = mDatabase.child(teamID);
         fbRef1.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {

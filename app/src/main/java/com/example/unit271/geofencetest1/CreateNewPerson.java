@@ -41,7 +41,7 @@ public class CreateNewPerson extends AppCompatActivity {
         teamNameList2 = new ArrayList<String>();
         teamNameList2.clear();
         dataRef5 = FirebaseDatabase.getInstance().getReference();
-        dataRef6 = dataRef5.child("People");
+        dataRef6 = dataRef5;
         dataRef6.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -72,13 +72,13 @@ public class CreateNewPerson extends AppCompatActivity {
                 }
             }
             if(newPersonFirebase){
-                dataRef5.child("People").child(newName).child("TotalOutreach").setValue(0.0);
-                dataRef5.child("People").child(newName).child("TotalRobotics").setValue(0.0);
-                dataRef5.child("People").child(newName).child("Password").setValue(newPassword);
-                dataRef5.child("People").child(newName).child("Type").setValue("students");
-                dataRef5.child("People").child(newName).child("Status").setValue("OUT");
-                dataRef5.child("People").child(newName).child("StartDate").setValue(creationString);
-                dataRef5.child("People").child(newName).child("Activity").setValue("Robotics");
+                dataRef5.child(newName).child("TotalOutreach").setValue(0.0);
+                dataRef5.child(newName).child("TotalRobotics").setValue(0.0);
+                dataRef5.child(newName).child("Password").setValue(newPassword);
+                dataRef5.child(newName).child("Type").setValue("students");
+                dataRef5.child(newName).child("Status").setValue("OUT");
+                dataRef5.child(newName).child("StartDate").setValue(creationString);
+                dataRef5.child(newName).child("Activity").setValue("Team Meeting");
 
                 Toast.makeText(getApplicationContext(), ("New Profile : " + newName),
                         Toast.LENGTH_SHORT).show();

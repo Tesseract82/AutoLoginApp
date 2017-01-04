@@ -68,9 +68,9 @@ public class chooseTeamMember extends AppCompatActivity {
         permanentTeamHoursList.clear();
         teamNameListView = (ListView) findViewById(R.id.newTeamListView);
         additionButton = (ImageButton) findViewById(R.id.newPersonButton);
-        additionButton.setEnabled(false);
+        additionButton.setEnabled(true);
         mDatabase = FirebaseDatabase.getInstance().getReference();
-        dataRef = mDatabase.child("People");
+        dataRef = mDatabase;
         retreiveAllPersonData();
     }
 
@@ -88,7 +88,6 @@ public class chooseTeamMember extends AppCompatActivity {
                     }
                     dataRef.removeEventListener(this);
                     generatePersonList();
-                    additionButton.setEnabled(true);
             }
 
             @Override

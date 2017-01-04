@@ -65,7 +65,7 @@ public class signInOther extends AppCompatActivity {
         permanentTeamList.clear();
         teamNameListView = (ListView) findViewById(R.id.peopleView);
         dataRef = FirebaseDatabase.getInstance().getReference();
-        DatabaseReference dataRef2 = dataRef.child("People");
+        DatabaseReference dataRef2 = dataRef;
         dataRef2.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {

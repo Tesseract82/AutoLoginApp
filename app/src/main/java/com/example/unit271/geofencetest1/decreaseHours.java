@@ -26,10 +26,9 @@ public class decreaseHours extends AppCompatActivity {
     String teamID;
     Button decreaseHoursButton;
     DatabaseReference dataRef6, dataBase;
-    int TotalRobotics, TotalOutreach;
-    TextView customTitleRobot, customTitleOut, roboticsView, outreachView;
-    EditText hoursInputRobot, hoursInputOut;
+    double TotalRobotics, TotalOutreach;
     Context appContext;
+    TextView roboticsView, outreachView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,32 +36,14 @@ public class decreaseHours extends AppCompatActivity {
         setContentView(R.layout.activity_decrease_hours);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         setTitle("Automatic Login App");
+        appContext = this;
         teamID = getIntent().getStringExtra("com.example.unit271.geofencetest1/MainActivity");
         dataBase = FirebaseDatabase.getInstance().getReference();
-        dataRef6 = dataBase.child("People").child(teamID);
+        dataRef6 = dataBase.child(teamID);
         TotalRobotics = 0;
         TotalOutreach = 0;
         roboticsView = (TextView) findViewById(R.id.decRobot);
         outreachView = (TextView) findViewById(R.id.decOut);
-
-        customTitleRobot = new TextView(this);
-        customTitleRobot.setText("Decrease Robotics Hours");
-        customTitleRobot.setTextSize(20);
-        customTitleRobot.setTextColor(Color.BLACK);
-        customTitleOut = new TextView(this);
-        customTitleOut.setText("Decreate Outreach Hours");
-        customTitleOut.setTextSize(20);
-        customTitleOut.setTextColor(Color.BLACK);
-        hoursInputRobot = new EditText(this);
-        hoursInputRobot.setText("0");
-        hoursInputRobot.setTextColor(Color.RED);
-        hoursInputRobot.setTextSize(30);
-        hoursInputRobot.setInputType(InputType.TYPE_CLASS_NUMBER);
-        hoursInputOut = new EditText(this);
-        hoursInputOut.setText("0");
-        hoursInputOut.setTextColor(Color.RED);
-        hoursInputOut.setTextSize(30);
-        hoursInputOut.setInputType(InputType.TYPE_CLASS_NUMBER);
 
         decreaseHoursButton = (Button) findViewById(R.id.decreaseHoursButton);
         decreaseHoursButton.setEnabled(false);
@@ -73,10 +54,18 @@ public class decreaseHours extends AppCompatActivity {
             public void onDataChange(DataSnapshot dataSnapshot) {
                 for (DataSnapshot infoSnapshot2: dataSnapshot.getChildren()) {
                     if(infoSnapshot2.getKey().equals("TotalRobotics")){
-                        TotalRobotics = ((Long) infoSnapshot2.getValue()).intValue();
+                        try {
+                            TotalRobotics = (Double) infoSnapshot2.getValue();
+                        } catch(ClassCastException cce){
+                            TotalRobotics = (Long) infoSnapshot2.getValue();
+                        }
                     }
                     if(infoSnapshot2.getKey().equals("TotalOutreach")){
-                        TotalOutreach = ((Long) infoSnapshot2.getValue()).intValue();
+                        try {
+                            TotalOutreach = (Double) infoSnapshot2.getValue();
+                        } catch(ClassCastException cce){
+                            TotalOutreach = (Long) infoSnapshot2.getValue();
+                        }
                     }
                 }
                 decreaseHoursButton.setEnabled(true);
@@ -92,6 +81,16 @@ public class decreaseHours extends AppCompatActivity {
     }
 
     public void onDecRobotClick(View view){
+        final TextView customTitleRobot = new TextView(this);
+        customTitleRobot.setText("Decrease Robotics Hours");
+        customTitleRobot.setTextSize(20);
+        customTitleRobot.setTextColor(Color.BLACK);
+        final EditText hoursInputRobot = new EditText(this);
+        hoursInputRobot.setText(roboticsView.getText());
+        hoursInputRobot.setTextColor(Color.RED);
+        hoursInputRobot.setTextSize(30);
+        hoursInputRobot.setInputType(InputType.TYPE_CLASS_NUMBER);
+
         AlertDialog.Builder robotBuilder = new AlertDialog.Builder(appContext);
         robotBuilder.setCustomTitle(customTitleRobot);
         robotBuilder.setView(hoursInputRobot);
@@ -101,7 +100,6 @@ public class decreaseHours extends AppCompatActivity {
                 String roboticsText = hoursInputRobot.getText().toString();
                 if(!roboticsText.equals("") && Integer.parseInt(roboticsText) >= 0) {
                     roboticsView.setText(roboticsText);
-                    hoursInputRobot.setText("0");
                     dialog.dismiss();
                 } else {
                     Toast.makeText(getBaseContext(), "Enter a Valid Number",
@@ -114,6 +112,16 @@ public class decreaseHours extends AppCompatActivity {
     }
 
     public void onDecOutClick(View view){
+        final TextView customTitleOut = new TextView(this);
+        customTitleOut.setText("Decrease Outreach Hours");
+        customTitleOut.setTextSize(20);
+        customTitleOut.setTextColor(Color.BLACK);
+        final EditText hoursInputOut = new EditText(this);
+        hoursInputOut.setText(outreachView.getText());
+        hoursInputOut.setTextColor(Color.RED);
+        hoursInputOut.setTextSize(30);
+        hoursInputOut.setInputType(InputType.TYPE_CLASS_NUMBER);
+
         AlertDialog.Builder outBuilder = new AlertDialog.Builder(appContext);
         outBuilder.setCustomTitle(customTitleOut);
         outBuilder.setView(hoursInputOut);
@@ -123,7 +131,6 @@ public class decreaseHours extends AppCompatActivity {
                 String outreachText = hoursInputOut.getText().toString();
                 if(!outreachText.equals("") && Integer.parseInt(outreachText) >= 0) {
                     outreachView.setText(outreachText);
-                    hoursInputOut.setText("0");
                     dialog.dismiss();
                 } else {
                     Toast.makeText(getBaseContext(), "Enter a Valid Number",
@@ -155,10 +162,18 @@ public class decreaseHours extends AppCompatActivity {
         }
         if(intValRobotics >= 0 && intValOutreach >= 0 && !numFormatException) {
             if (!strValRobotics.equals("")) {
-                dataRef6.child("TotalRobotics").setValue(TotalRobotics - intValRobotics);
+                if(TotalRobotics - (intValRobotics * 60) >= 0) {
+                    dataRef6.child("TotalRobotics").setValue(TotalRobotics - (intValRobotics * 60));
+                } else {
+                    dataRef6.child("TotalRobotics").setValue(0);
+                }
             }
             if (!strValOutreach.equals("")) {
-                dataRef6.child("TotalOutreach").setValue(TotalOutreach - intValOutreach);
+                if(TotalOutreach - (intValOutreach * 60) >= 0) {
+                    dataRef6.child("TotalOutreach").setValue(TotalOutreach - (intValOutreach * 60));
+                } else {
+                    dataRef6.child("TotalOutreach").setValue(0);
+                }
             }
             Intent returnIntent = new Intent(this, MainActivity.class);
             startActivity(returnIntent);

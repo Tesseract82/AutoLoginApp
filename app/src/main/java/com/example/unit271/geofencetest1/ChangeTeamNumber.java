@@ -15,6 +15,7 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.plus.model.people.Person;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -40,6 +41,7 @@ public class ChangeTeamNumber extends AppCompatActivity {
     RadioButton rb;
     TextView changeName;
     DatabaseReference nameChangeDatabase;
+    PersonObject oldPersonFirebase;
 
 
     @Override
@@ -48,10 +50,14 @@ public class ChangeTeamNumber extends AppCompatActivity {
         setContentView(R.layout.activity_change_team_num);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         setTitle("Setup");
+        teamNumData = getSharedPreferences(filename, 0);
+        teamID = teamNumData.getString("newIDKey", "NONE");
+
         final Button saveButton = (Button) findViewById(R.id.saveButton);
         saveButton.setEnabled(false);
         existingPeople = new ArrayList<>();
         existingPeople.clear();
+        oldPersonFirebase = null;
         nameChangeDatabase = FirebaseDatabase.getInstance().getReference();
         nameChangeDatabase.addValueEventListener(new ValueEventListener() {
             @Override
@@ -60,6 +66,9 @@ public class ChangeTeamNumber extends AppCompatActivity {
                     PersonObject existingPerson = personSnapshot.getValue(PersonObject.class);
                     existingPerson.setPersonName(personSnapshot.getKey());
                     existingPeople.add(existingPerson);
+                    if(personSnapshot.getKey().equals(teamID)){
+                        oldPersonFirebase = personSnapshot.getValue(PersonObject.class);
+                    }
                 }
                 saveButton.setEnabled(true);
             }
@@ -73,8 +82,6 @@ public class ChangeTeamNumber extends AppCompatActivity {
         cb6 = (CheckBox) findViewById(R.id.checkPer6);
         cb7 = (CheckBox) findViewById(R.id.checkPer7);
 
-        teamNumData = getSharedPreferences(filename, 0);
-        teamID = teamNumData.getString("newIDKey", "NONE");
         free1 = teamNumData.getBoolean("free1", false);
         free6 = teamNumData.getBoolean("free6", false);
         free7 = teamNumData.getBoolean("free7", false);
@@ -112,17 +119,46 @@ public class ChangeTeamNumber extends AppCompatActivity {
 
     public void onSaveClick(View view){
         if(!changeName.getText().toString().equals("")) {
-            if (changeName.getText() != teamID) {
+            if (!changeName.getText().toString().equals(teamID)) {
+                Log.i("CHANGENAME TEAMID", teamID);
+                Log.i("CHANGENAME", changeName.getText().toString());
                 Log.i("CHANGENAME", "NPF=TRUE");
                 boolean createNewPersonFirebase = true;
                 for (int a = 0; a <= existingPeople.size() - 1; a++) {
-                    if (changeName.getText().equals(existingPeople.get(a).getPersonName())) {
+                    if (changeName.getText().toString().equals(existingPeople.get(a).getPersonName())) {
                         createNewPersonFirebase = false;
+                        Toast.makeText(getBaseContext(), "This name already has a profile.",
+                                Toast.LENGTH_SHORT).show();
                         Log.i("CHANGENAME", "NPF=FALSE");
                     }
                 }
                 if (createNewPersonFirebase) {
-                    //TODO : What should happen?
+                    String newName = changeName.getText().toString();
+                    if(oldPersonFirebase != null){
+                        nameChangeDatabase.child(newName).child("Password").setValue(oldPersonFirebase.getPassword());
+                        if(oldPersonFirebase.getStatus() != null) {
+                            nameChangeDatabase.child(newName).child("Status").setValue(oldPersonFirebase.getStatus());
+                        } else {
+                            nameChangeDatabase.child(newName).child("Status").setValue("OUT");
+                        }
+                        nameChangeDatabase.child(newName).child("StartTime").setValue(oldPersonFirebase.getStartTime());
+                        nameChangeDatabase.child(newName).child("StartDate").setValue(oldPersonFirebase.getStartDate());
+                        nameChangeDatabase.child(newName).child("TotalRobotics").setValue(oldPersonFirebase.getTotalRobotics());
+                        nameChangeDatabase.child(newName).child("TotalOutreach").setValue(oldPersonFirebase.getTotalOutreach());
+                        nameChangeDatabase.child(newName).child("Type").setValue(oldPersonFirebase.getType());
+                        if(oldPersonFirebase.getActivity() != null) {
+                            nameChangeDatabase.child(newName).child("Activity").setValue(oldPersonFirebase.getActivity());
+                        } else {
+                            nameChangeDatabase.child(newName).child("Activity").setValue("Robotics");
+                        }
+                        nameChangeDatabase.child(teamID).setValue(null);
+                        SharedPreferences.Editor newNameEditor = teamNumData.edit();
+                        newNameEditor.putString("newIDKey", newName);
+                        newNameEditor.commit();
+                    } else {
+                        Toast.makeText(getBaseContext(), "Cannot change name, no current profile exists.",
+                                Toast.LENGTH_SHORT);
+                    }
                 }
             }
             SharedPreferences.Editor editor = teamNumData.edit();

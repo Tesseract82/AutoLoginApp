@@ -43,7 +43,6 @@ public class ManualSignIn extends AppCompatActivity {
     Button signInSelf;
     DatabaseReference mDatabase, dataRef7;
     double totalRoboticsTime, totalOutreachTime;
-    boolean firstDataChange;
     Button button;
     Spinner loginTypeSpinner;
     EditText hoursText, minutesText;
@@ -61,19 +60,22 @@ public class ManualSignIn extends AppCompatActivity {
         teamNumData = getSharedPreferences(filename, 0);
         appContext = this;
         otherTypesLoginStatus = new ArrayList<>();
-        currentLoginType = "Robotics";
+        currentLoginType = "Team Meeting";
         currentPerson = new PersonObject();
         button = (Button) findViewById(R.id.buttonManualSignIn);
         teamName = getIntent().getStringExtra("com.example.unit271.geofencetest1/MainActivity2");
         teamNameDisplay = (TextView) findViewById(R.id.textViewManualName);
         signInSelf = (Button) findViewById(R.id.buttonManualSignIn);
+        loginTypeSpinner = (Spinner) findViewById(R.id.loginTypeSpinner);
+        loginTypeSpinner.setEnabled(false);
         teamNameDisplay.setText(teamName);
         signInSelf.setEnabled(false);
 
-        firstDataChange = true;
         mDatabase = FirebaseDatabase.getInstance().getReference();
-        dataRef7 = mDatabase.child("People").child(teamName);
-        mDatabase.child("People").addValueEventListener(new ValueEventListener() {
+        dataRef7 = mDatabase.child(teamName);
+        Status = "OUT";
+        Activity = "Team Meeting";
+        mDatabase.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 Log.i("NULLPOINTEREXCEPTION", "ONDATACHANGE");
@@ -90,13 +92,20 @@ public class ManualSignIn extends AppCompatActivity {
                 totalRoboticsTime = currentPerson.getTotalRobotics();
                 totalOutreachTime = currentPerson.getTotalOutreach();
                 startTime = currentPerson.getStartTime();
-                Status = currentPerson.getStatus();
-                Activity = currentPerson.getActivity();
-                firstDataChange = false;
-                setUpSpinner();
-                loginTypeSpinner.setEnabled(true);
-                signInSelf.setEnabled(true);
-                setViews(); //Necessary for initial setting, which is why it only checks Robotics
+                if(currentPerson.getStatus() != null) {
+                    Status = currentPerson.getStatus();
+                }
+                if(currentPerson.getActivity() != null) {
+                    Activity = currentPerson.getActivity();
+                }
+                if(currentPerson != null) {
+                    setUpSpinner();
+                    loginTypeSpinner.setEnabled(true);
+                    signInSelf.setEnabled(true);
+                    setViews(); //Necessary for initial setting, which is why it only checks Robotics
+                } else {
+                    //Stop, Shouldn't do anything.
+                }
             }
 
             @Override
@@ -107,11 +116,9 @@ public class ManualSignIn extends AppCompatActivity {
     }
 
     public void setUpSpinner(){
-        loginTypeSpinner = (Spinner) findViewById(R.id.loginTypeSpinner);
-        loginTypeSpinner.setEnabled(false);
         ArrayList<String> spinnerTypeList = new ArrayList<>();
         spinnerTypeList.clear();
-        spinnerTypeList.add("Robotics");
+        spinnerTypeList.add("Team Meeting");
         spinnerTypeList.add("Outreach");
         ArrayAdapter<String> spinnerTypeAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, spinnerTypeList);
         loginTypeSpinner.setAdapter(spinnerTypeAdapter);
@@ -131,9 +138,9 @@ public class ManualSignIn extends AppCompatActivity {
 
     public void processSpinnerSelection(String spinnerSelection){
         currentLoginType = spinnerSelection;
-        if(currentLoginType.equals("Robotics")){
+        if(currentLoginType.equals("Team Meeting")){
             Log.i("LOGINTYPE", "ROBOTICS");
-            if(currentPerson.getActivity().equals("Robotics") && currentPerson.getStatus().equals("IN")){
+            if(currentPerson.getActivity().equals("Team Meeting") && currentPerson.getStatus().equals("IN")){
                 signInSelf.setText("Sign Out");
             } else {
                 signInSelf.setText("Sign In");
@@ -149,108 +156,118 @@ public class ManualSignIn extends AppCompatActivity {
     }
 
     public void setViews(){
-        if(Status.equals("IN") && Activity.equals("Robotics") && currentLoginType.equals("Robotics")){
+        if(Status.equals("IN") && Activity.equals("Team Meeting") && currentLoginType.equals("Team Meeting")){
             signInSelf.setText("Sign Out");
-        } else if(currentLoginType.equals("Robotics") && (Status.equals("OUT") || !Activity.equals("Robotics"))) {
+        } else if(currentLoginType.equals("Team Meeting") && (Status.equals("OUT") || !Activity.equals("Team Meeting"))) {
             signInSelf.setText("Sign In");
         }
         signInSelf.setTextColor(Color.BLACK);
     }
 
     public void onSignButtonClick2(View view) {
-        Date date = new Date(System.currentTimeMillis());
+        if(currentPerson != null) {
+            Date date = new Date(System.currentTimeMillis());
 
-        SimpleDateFormat uploadFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss +0000", Locale.US);
-        String uploadDate = uploadFormatter.format(date);
-        double finalDateInt = 0.0;
-        String currentTypeLastSignin = null;
-        double totalTime = 0.0;
-        otherTypesLoginStatus.clear();
-        if(currentLoginType.equals("Robotics")){
-            if(Activity.equals("Robotics") && Status.equals("IN")) {
-                currentTypeLastSignin = startTime;
-            } else {
-                currentTypeLastSignin = null;
+            SimpleDateFormat uploadFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss +0000", Locale.US);
+            String uploadDate = uploadFormatter.format(date);
+            double finalDateInt = 0.0;
+            String currentTypeLastSignin = null;
+            double totalTime = 0.0;
+            otherTypesLoginStatus.clear();
+            if (currentLoginType.equals("Team Meeting")) {
+                if (Activity.equals("Team Meeting") && Status.equals("IN")) {
+                    currentTypeLastSignin = startTime;
+                } else {
+                    currentTypeLastSignin = null;
+                }
+                totalTime = totalRoboticsTime;
+            } else if (currentLoginType.equals("Outreach")) {
+                if (Activity.equals("Outreach") && Status.equals("IN")) {
+                    currentTypeLastSignin = startTime;
+                } else {
+                    currentTypeLastSignin = null;
+                }
+                totalTime = totalOutreachTime;
             }
-            totalTime = totalRoboticsTime;
-        } else if(currentLoginType.equals("Outreach")){
-            if(Activity.equals("Outreach") && Status.equals("IN")) {
-                currentTypeLastSignin = startTime;
-            } else {
-                currentTypeLastSignin = null;
+            Date lastDate = null;
+            try {
+                if (currentTypeLastSignin != null) {
+                    lastDate = uploadFormatter.parse(currentTypeLastSignin);
+                }
+            } catch (ParseException pe) {
+                pe.printStackTrace();
             }
-            totalTime = totalOutreachTime;
-        }
-        Date lastDate = null;
-        try {
-            if(currentTypeLastSignin != null) {
-                lastDate = uploadFormatter.parse(currentTypeLastSignin);
-            }
-        } catch(ParseException pe){
-            pe.printStackTrace();
-        }
-        if(currentTypeLastSignin != null){
-            if (lastDate != null) {
-                finalDateInt = (double) (date.getTime() - lastDate.getTime());
-            }
-            dataRef7.child("Total" + currentLoginType).setValue(totalTime + (finalDateInt / (1000 * 60)));
-            dataRef7.child("Status").setValue("OUT");
-            dataRef7.child("Activity").setValue(currentLoginType);
-
-            Intent returnIntent = new Intent(this, MainActivity.class);
-            startActivity(returnIntent);
-        } else {
-            if(!(Status.equals("IN") && !Activity.equals(currentLoginType))) {
-                dataRef7.child("Status").setValue("IN");
+            if (currentTypeLastSignin != null) {
+                if (lastDate != null) {
+                    finalDateInt = (double) (date.getTime() - lastDate.getTime());
+                }
+                if(currentLoginType.equals("Team Meeting")) {
+                    dataRef7.child("TotalRobotics").setValue(totalTime + (finalDateInt / (1000 * 60)));
+                }
+                if(currentLoginType.equals("Outreach")){
+                    dataRef7.child("TotalOutreach").setValue(totalTime + (finalDateInt / (1000 * 60)));
+                }
+                dataRef7.child("Status").setValue("OUT");
                 dataRef7.child("Activity").setValue(currentLoginType);
-                dataRef7.child("StartTime").setValue(uploadDate);
-                AlertDialog.Builder timeDialogBuilder = new AlertDialog.Builder(appContext);
-                LinearLayout timeHolder = new LinearLayout(this);
 
-                hoursText = new EditText(this);
-                hoursText.setTextColor(Color.BLACK);
-                hoursText.setTextSize(35);
-                hoursText.setHint("HH");
-                hoursText.setInputType(InputType.TYPE_CLASS_NUMBER);
-                hoursText.setEnabled(true);
-                minutesText = new EditText(this);
-                minutesText.setTextColor(Color.BLACK);
-                minutesText.setTextSize(35);
-                minutesText.setHint("mm");
-                minutesText.setInputType(InputType.TYPE_CLASS_NUMBER);
-                minutesText.setEnabled(true);
-                TextView timeDialogTitle = new TextView(this);
-                timeDialogTitle.setText("How Long do You Expect to Stay?");
-                timeDialogTitle.setTextColor(Color.BLACK);
-                timeDialogTitle.setTextSize(20);
-
-                timeHolder.addView(hoursText);
-                timeHolder.addView(minutesText);
-                timeDialogBuilder.setView(timeHolder);
-                timeDialogBuilder.setCancelable(true).setCustomTitle(timeDialogTitle).setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        int hoursInt = 0;
-                        int minutesInt = 0;
-                        if(!hoursText.getText().toString().equals("")) {
-                            hoursInt = Integer.valueOf(hoursText.getText().toString());
-                        }
-                        if(!minutesText.getText().toString().equals("")) {
-                            minutesInt = Integer.valueOf(minutesText.getText().toString());
-                        }
-                        SharedPreferences.Editor editor = teamNumData.edit();
-                        editor.putInt("notifHours", hoursInt);
-                        editor.putInt("notifMinutes", minutesInt);
-                        editor.commit();
-                        dialog.dismiss();
-                        returnHome();
-                    }
-                });
-                AlertDialog timeDialog = timeDialogBuilder.create();
-                timeDialog.show();
+                Intent returnIntent = new Intent(this, MainActivity.class);
+                startActivity(returnIntent);
             } else {
-                Toast.makeText(getBaseContext(), "Please Sign Out of Your Current Activity First.", Toast.LENGTH_SHORT).show();
+                if (!(Status.equals("IN") && !Activity.equals(currentLoginType))) {
+                    dataRef7.child("Status").setValue("IN");
+                    dataRef7.child("Activity").setValue(currentLoginType);
+                    dataRef7.child("StartTime").setValue(uploadDate);
+                    AlertDialog.Builder timeDialogBuilder = new AlertDialog.Builder(appContext);
+                    LinearLayout timeHolder = new LinearLayout(this);
+
+                    hoursText = new EditText(this);
+                    hoursText.setTextColor(Color.BLACK);
+                    hoursText.setTextSize(35);
+                    hoursText.setHint("HH");
+                    hoursText.setInputType(InputType.TYPE_CLASS_NUMBER);
+                    hoursText.setEnabled(true);
+                    minutesText = new EditText(this);
+                    minutesText.setTextColor(Color.BLACK);
+                    minutesText.setTextSize(35);
+                    minutesText.setHint("mm");
+                    minutesText.setInputType(InputType.TYPE_CLASS_NUMBER);
+                    minutesText.setEnabled(true);
+                    TextView timeDialogTitle = new TextView(this);
+                    timeDialogTitle.setText("How Long do You Expect to Stay?");
+                    timeDialogTitle.setTextColor(Color.BLACK);
+                    timeDialogTitle.setTextSize(20);
+
+                    timeHolder.addView(hoursText);
+                    timeHolder.addView(minutesText);
+                    timeDialogBuilder.setView(timeHolder);
+                    timeDialogBuilder.setCancelable(true).setCustomTitle(timeDialogTitle).setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            int hoursInt = 0;
+                            int minutesInt = 0;
+                            if (!hoursText.getText().toString().equals("")) {
+                                hoursInt = Integer.valueOf(hoursText.getText().toString());
+                            }
+                            if (!minutesText.getText().toString().equals("")) {
+                                minutesInt = Integer.valueOf(minutesText.getText().toString());
+                            }
+                            SharedPreferences.Editor editor = teamNumData.edit();
+                            editor.putInt("notifHours", hoursInt);
+                            editor.putInt("notifMinutes", minutesInt);
+                            editor.commit();
+                            dialog.dismiss();
+                            returnHome();
+                        }
+                    });
+                    AlertDialog timeDialog = timeDialogBuilder.create();
+                    timeDialog.show();
+                } else {
+                    Toast.makeText(getBaseContext(), "Please Sign Out of Your Current Activity First.", Toast.LENGTH_SHORT).show();
+                }
             }
+        } else {
+            Toast.makeText(getBaseContext(), "Could not complete request, your profile does not exist.",
+                    Toast.LENGTH_SHORT);
         }
     }
 
