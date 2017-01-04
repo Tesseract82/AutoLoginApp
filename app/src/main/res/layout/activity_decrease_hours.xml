@@ -15,42 +15,8 @@
         android:text="Confirm"
         android:id="@+id/decreaseHoursButton"
         android:onClick="onDecreaseHoursClick"
-        android:layout_below="@+id/hoursEditTextCompetition"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="41dp" />
-
-    <EditText
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/hoursEditText"
-        android:hint="Meeting"
-        android:textAlignment="center"
-        android:textSize="25sp"
-        android:inputType="number"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="105dp" />
-
-    <EditText
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/hoursEditTextFM"
-        android:hint="FM"
-        android:textSize="25sp"
-        android:textAlignment="center"
-        android:layout_below="@+id/hoursEditText"
-        android:layout_centerHorizontal="true"
-        android:inputType="number" />
-
-    <EditText
-        android:layout_width="wrap_content"
-        android:textAlignment="center"
-        android:layout_height="wrap_content"
-        android:id="@+id/hoursEditTextCompetition"
-        android:layout_below="@+id/hoursEditTextFM"
-        android:layout_centerHorizontal="true"
-        android:textSize="25sp"
-        android:hint="Competition" />
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -61,5 +27,56 @@
         android:layout_centerHorizontal="true"
         android:textColor="#000000"
         android:textSize="20sp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Robotics"
+        android:id="@+id/svDecRobot"
+        android:layout_below="@+id/staticView11"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:textSize="20sp"
+        android:textColor="#414141" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="0"
+        android:id="@+id/decRobot"
+        android:layout_alignTop="@+id/svDecRobot"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:textColor="#440000"
+        android:textSize="35sp"
+        android:clickable="true"
+        android:enabled="true"
+        android:onClick="onDecRobotClick" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Outreach"
+        android:id="@+id/svDecOut"
+        android:layout_below="@+id/decRobot"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:textSize="20sp"
+        android:textColor="#414141" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="0"
+        android:id="@+id/decOut"
+        android:layout_alignTop="@+id/svDecOut"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:textSize="35sp"
+        android:textColor="#440000"
+        android:textIsSelectable="false"
+        android:onClick="onDecOutClick"
+        android:enabled="true"
+        android:clickable="true" />
 
 </RelativeLayout>

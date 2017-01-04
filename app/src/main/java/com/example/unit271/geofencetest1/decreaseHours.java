@@ -1,12 +1,18 @@
 package com.example.unit271.geofencetest1;
 
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.graphics.Color;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.InputType;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.firebase.database.DataSnapshot;
@@ -18,10 +24,12 @@ import com.google.firebase.database.ValueEventListener;
 public class decreaseHours extends AppCompatActivity {
 
     String teamID;
-    EditText decreaseHoursText, decreaseHoursTextFM, decreaseHoursTextCompetition;
     Button decreaseHoursButton;
     DatabaseReference dataRef6, dataBase;
-    int TotalRobotics, TotalFM, TotalCompetition;
+    int TotalRobotics, TotalOutreach;
+    TextView customTitleRobot, customTitleOut, roboticsView, outreachView;
+    EditText hoursInputRobot, hoursInputOut;
+    Context appContext;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,13 +41,33 @@ public class decreaseHours extends AppCompatActivity {
         dataBase = FirebaseDatabase.getInstance().getReference();
         dataRef6 = dataBase.child("People").child(teamID);
         TotalRobotics = 0;
-        TotalCompetition = 0;
-        TotalFM = 0;
-        decreaseHoursText = (EditText) findViewById(R.id.hoursEditText);
-        decreaseHoursTextFM = (EditText) findViewById(R.id.hoursEditTextFM);
-        decreaseHoursTextCompetition = (EditText) findViewById(R.id.hoursEditTextCompetition);
+        TotalOutreach = 0;
+        roboticsView = (TextView) findViewById(R.id.decRobot);
+        outreachView = (TextView) findViewById(R.id.decOut);
+
+        customTitleRobot = new TextView(this);
+        customTitleRobot.setText("Decrease Robotics Hours");
+        customTitleRobot.setTextSize(20);
+        customTitleRobot.setTextColor(Color.BLACK);
+        customTitleOut = new TextView(this);
+        customTitleOut.setText("Decreate Outreach Hours");
+        customTitleOut.setTextSize(20);
+        customTitleOut.setTextColor(Color.BLACK);
+        hoursInputRobot = new EditText(this);
+        hoursInputRobot.setText("0");
+        hoursInputRobot.setTextColor(Color.RED);
+        hoursInputRobot.setTextSize(30);
+        hoursInputRobot.setInputType(InputType.TYPE_CLASS_NUMBER);
+        hoursInputOut = new EditText(this);
+        hoursInputOut.setText("0");
+        hoursInputOut.setTextColor(Color.RED);
+        hoursInputOut.setTextSize(30);
+        hoursInputOut.setInputType(InputType.TYPE_CLASS_NUMBER);
+
         decreaseHoursButton = (Button) findViewById(R.id.decreaseHoursButton);
         decreaseHoursButton.setEnabled(false);
+        roboticsView.setEnabled(false);
+        outreachView.setEnabled(false);
         dataRef6.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -47,14 +75,13 @@ public class decreaseHours extends AppCompatActivity {
                     if(infoSnapshot2.getKey().equals("TotalRobotics")){
                         TotalRobotics = ((Long) infoSnapshot2.getValue()).intValue();
                     }
-                    if(infoSnapshot2.getKey().equals("TotalFM")){
-                        TotalFM = ((Long) infoSnapshot2.getValue()).intValue();
-                    }
-                    if(infoSnapshot2.getKey().equals("TotalCompetition")){
-                        TotalCompetition = ((Long) infoSnapshot2.getValue()).intValue();
+                    if(infoSnapshot2.getKey().equals("TotalOutreach")){
+                        TotalOutreach = ((Long) infoSnapshot2.getValue()).intValue();
                     }
                 }
                 decreaseHoursButton.setEnabled(true);
+                roboticsView.setEnabled(true);
+                outreachView.setEnabled(true);
             }
 
             @Override
@@ -64,38 +91,74 @@ public class decreaseHours extends AppCompatActivity {
         });
     }
 
+    public void onDecRobotClick(View view){
+        AlertDialog.Builder robotBuilder = new AlertDialog.Builder(appContext);
+        robotBuilder.setCustomTitle(customTitleRobot);
+        robotBuilder.setView(hoursInputRobot);
+        robotBuilder.setCancelable(true).setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                String roboticsText = hoursInputRobot.getText().toString();
+                if(!roboticsText.equals("") && Integer.parseInt(roboticsText) >= 0) {
+                    roboticsView.setText(roboticsText);
+                    hoursInputRobot.setText("0");
+                    dialog.dismiss();
+                } else {
+                    Toast.makeText(getBaseContext(), "Enter a Valid Number",
+                            Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+        AlertDialog robotDialog = robotBuilder.create();
+        robotDialog.show();
+    }
+
+    public void onDecOutClick(View view){
+        AlertDialog.Builder outBuilder = new AlertDialog.Builder(appContext);
+        outBuilder.setCustomTitle(customTitleOut);
+        outBuilder.setView(hoursInputOut);
+        outBuilder.setCancelable(true).setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                String outreachText = hoursInputOut.getText().toString();
+                if(!outreachText.equals("") && Integer.parseInt(outreachText) >= 0) {
+                    outreachView.setText(outreachText);
+                    hoursInputOut.setText("0");
+                    dialog.dismiss();
+                } else {
+                    Toast.makeText(getBaseContext(), "Enter a Valid Number",
+                            Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+        AlertDialog outDialog = outBuilder.create();
+        outDialog.show();
+    }
+
     public void onDecreaseHoursClick(View view){
-        String strValRobotics = String.valueOf(decreaseHoursText.getText());
-        String strValFM = String.valueOf(decreaseHoursTextFM.getText());
-        String strValCompetition = String.valueOf(decreaseHoursTextCompetition.getText());
+        String strValRobotics = roboticsView.getText().toString();
+        String strValOutreach = outreachView.getText().toString();
         int intValRobotics = 0;
-        int intValFM = 0;
-        int intValCompetition = 0;
+        int intValOutreach = 0;
         boolean numFormatException = false;
         try {
             if (!strValRobotics.equals("")) {
                 intValRobotics = Integer.parseInt(strValRobotics);
             }
-            if (!strValFM.equals("")) {
-                intValFM = Integer.parseInt(strValFM);
-            }
-            if (!strValCompetition.equals("")) {
-                intValCompetition = Integer.parseInt(strValCompetition);
+            if (!strValOutreach.equals("")) {
+                intValOutreach = Integer.parseInt(strValOutreach);
             }
         } catch(NumberFormatException nfe){
             Toast.makeText(getBaseContext(), "Use Numbers Only.", Toast.LENGTH_SHORT).show();
             //nfe.printStackTrace();
             numFormatException = true;
         }
-        if(intValRobotics >= 0 && intValFM >= 0 && intValCompetition >= 0 && !numFormatException) {
+        if(intValRobotics >= 0 && intValOutreach >= 0 && !numFormatException) {
             if (!strValRobotics.equals("")) {
-                dataRef6.child("SubtractHoursRobotics").setValue(TotalRobotics - intValRobotics);
+                dataRef6.child("TotalRobotics").setValue(TotalRobotics - intValRobotics);
             }
-            if (!strValFM.equals("")) {
-                dataRef6.child("SubtractHoursFM").setValue(TotalFM - intValFM);
-            }
-            if (!strValCompetition.equals("")) {
-                dataRef6.child("SubtractHoursCompetition").setValue(TotalCompetition - intValCompetition);
+            if (!strValOutreach.equals("")) {
+                dataRef6.child("TotalOutreach").setValue(TotalOutreach - intValOutreach);
             }
             Intent returnIntent = new Intent(this, MainActivity.class);
             startActivity(returnIntent);

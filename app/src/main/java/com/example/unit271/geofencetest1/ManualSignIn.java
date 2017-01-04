@@ -38,12 +38,12 @@ public class ManualSignIn extends AppCompatActivity {
     public static String filename = "NumberHolder";
     SharedPreferences teamNumData;
     String teamName;
-    String currentLoginType;
+    String currentLoginType, Status, Activity, startTime;
     TextView teamNameDisplay;
     Button signInSelf;
     DatabaseReference mDatabase, dataRef7;
-    String lastSignedInRobotics, lastSignedInFM, lastSignedInCompetition;
-    int totalRoboticsTime, totalFMTime, totalCompetitionTime;
+    double totalRoboticsTime, totalOutreachTime;
+    boolean firstDataChange;
     Button button;
     Spinner loginTypeSpinner;
     EditText hoursText, minutesText;
@@ -69,13 +69,50 @@ public class ManualSignIn extends AppCompatActivity {
         signInSelf = (Button) findViewById(R.id.buttonManualSignIn);
         teamNameDisplay.setText(teamName);
         signInSelf.setEnabled(false);
+
+        firstDataChange = true;
+        mDatabase = FirebaseDatabase.getInstance().getReference();
+        dataRef7 = mDatabase.child("People").child(teamName);
+        mDatabase.child("People").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                Log.i("NULLPOINTEREXCEPTION", "ONDATACHANGE");
+                for (DataSnapshot infoSnapshot : dataSnapshot.getChildren()) {
+                    Log.i("PERSONSEARCHSTRING", teamName);
+                    if (infoSnapshot.getKey().equals(teamName)) {
+                        Log.i("PERSONSEARCHSTRING", "FOUND");
+                        currentPerson = infoSnapshot.getValue(PersonObject.class);
+                        currentPerson.setPersonName(teamName);
+                        break;
+                    }
+                }
+                Log.i("NULLPOINTEREXCEPTION", "RETRIEVED SUCCESSFULLY");
+                totalRoboticsTime = currentPerson.getTotalRobotics();
+                totalOutreachTime = currentPerson.getTotalOutreach();
+                startTime = currentPerson.getStartTime();
+                Status = currentPerson.getStatus();
+                Activity = currentPerson.getActivity();
+                firstDataChange = false;
+                setUpSpinner();
+                loginTypeSpinner.setEnabled(true);
+                signInSelf.setEnabled(true);
+                setViews(); //Necessary for initial setting, which is why it only checks Robotics
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
+
+    public void setUpSpinner(){
         loginTypeSpinner = (Spinner) findViewById(R.id.loginTypeSpinner);
         loginTypeSpinner.setEnabled(false);
         ArrayList<String> spinnerTypeList = new ArrayList<>();
         spinnerTypeList.clear();
         spinnerTypeList.add("Robotics");
-        spinnerTypeList.add("FM");
-        spinnerTypeList.add("Competition");
+        spinnerTypeList.add("Outreach");
         ArrayAdapter<String> spinnerTypeAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, spinnerTypeList);
         loginTypeSpinner.setAdapter(spinnerTypeAdapter);
         loginTypeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -90,61 +127,20 @@ public class ManualSignIn extends AppCompatActivity {
                 //Do Nothing
             }
         });
-        mDatabase = FirebaseDatabase.getInstance().getReference();
-        dataRef7 = mDatabase.child("People").child(teamName);
-        mDatabase.child("People").addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                for (DataSnapshot infoSnapshot : dataSnapshot.getChildren()) {
-                    Log.i("PERSONSEARCHSTRING", teamName);
-                    if (infoSnapshot.getKey().equals(teamName)) {
-                        Log.i("PERSONSEARCHSTRING", "FOUND");
-                        currentPerson = infoSnapshot.getValue(PersonObject.class);
-                        currentPerson.setPersonName(teamName);
-                        break;
-                    }
-                }
-                totalRoboticsTime = currentPerson.getTotalRobotics();
-                totalFMTime = currentPerson.getTotalFM();
-                totalCompetitionTime = currentPerson.getTotalCompetition();
-                lastSignedInRobotics = currentPerson.getLastSignInRobotics();
-                lastSignedInFM = currentPerson.getLastSignInFM();
-                lastSignedInCompetition = currentPerson.getLastSignInCompetition();
-                loginTypeSpinner.setEnabled(true);
-                signInSelf.setEnabled(true);
-                setViews(); //Necessary for initial setting, which is why it only checks Robotics
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
     }
 
     public void processSpinnerSelection(String spinnerSelection){
         currentLoginType = spinnerSelection;
-        if(currentPerson == null){
-            Log.e("CURRENTPERSONIS", " NULL");
-        } else {
-            Log.e("CURRENTPERSONIS", " NOT NULL!");
-        }
         if(currentLoginType.equals("Robotics")){
             Log.i("LOGINTYPE", "ROBOTICS");
-            if(currentPerson.getLastSignInRobotics() != null){
+            if(currentPerson.getActivity().equals("Robotics") && currentPerson.getStatus().equals("IN")){
                 signInSelf.setText("Sign Out");
             } else {
                 signInSelf.setText("Sign In");
                 Log.i("LOGINTYPE", "SIGNIN");
             }
-        } else if(currentLoginType.equals("FM")){
-            if(currentPerson.getLastSignInFM() != null){
-                signInSelf.setText("Sign Out");
-            } else {
-                signInSelf.setText("Sign In");
-            }
-        } else if(currentLoginType.equals("Competition")){
-            if(currentPerson.getLastSignInCompetition() != null){
+        } else if(currentLoginType.equals("Outreach")){
+            if(currentPerson.getActivity().equals("Outreach") && currentPerson.getStatus().equals("IN")){
                 signInSelf.setText("Sign Out");
             } else {
                 signInSelf.setText("Sign In");
@@ -153,9 +149,9 @@ public class ManualSignIn extends AppCompatActivity {
     }
 
     public void setViews(){
-        if(lastSignedInRobotics != null && currentLoginType.equals("Robotics")){
+        if(Status.equals("IN") && Activity.equals("Robotics") && currentLoginType.equals("Robotics")){
             signInSelf.setText("Sign Out");
-        } else if(currentLoginType.equals("Robotics")) {
+        } else if(currentLoginType.equals("Robotics") && (Status.equals("OUT") || !Activity.equals("Robotics"))) {
             signInSelf.setText("Sign In");
         }
         signInSelf.setTextColor(Color.BLACK);
@@ -164,27 +160,26 @@ public class ManualSignIn extends AppCompatActivity {
     public void onSignButtonClick2(View view) {
         Date date = new Date(System.currentTimeMillis());
 
-        SimpleDateFormat uploadFormatter = new SimpleDateFormat("MM-dd-yyyy-HHmm", Locale.US);
+        SimpleDateFormat uploadFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss +0000", Locale.US);
         String uploadDate = uploadFormatter.format(date);
-        int finalDateInt = 0;
+        double finalDateInt = 0.0;
         String currentTypeLastSignin = null;
-        int totalTime = 0;
+        double totalTime = 0.0;
         otherTypesLoginStatus.clear();
         if(currentLoginType.equals("Robotics")){
-            currentTypeLastSignin = lastSignedInRobotics;
+            if(Activity.equals("Robotics") && Status.equals("IN")) {
+                currentTypeLastSignin = startTime;
+            } else {
+                currentTypeLastSignin = null;
+            }
             totalTime = totalRoboticsTime;
-            otherTypesLoginStatus.add(lastSignedInCompetition);
-            otherTypesLoginStatus.add(lastSignedInFM);
-        } else if(currentLoginType.equals("FM")){
-            currentTypeLastSignin = lastSignedInFM;
-            totalTime = totalFMTime;
-            otherTypesLoginStatus.add(lastSignedInCompetition);
-            otherTypesLoginStatus.add(lastSignedInRobotics);
-        } else if(currentLoginType.equals("Competition")){
-            currentTypeLastSignin = lastSignedInCompetition;
-            totalTime = totalCompetitionTime;
-            otherTypesLoginStatus.add(lastSignedInRobotics);
-            otherTypesLoginStatus.add(lastSignedInFM);
+        } else if(currentLoginType.equals("Outreach")){
+            if(Activity.equals("Outreach") && Status.equals("IN")) {
+                currentTypeLastSignin = startTime;
+            } else {
+                currentTypeLastSignin = null;
+            }
+            totalTime = totalOutreachTime;
         }
         Date lastDate = null;
         try {
@@ -196,22 +191,19 @@ public class ManualSignIn extends AppCompatActivity {
         }
         if(currentTypeLastSignin != null){
             if (lastDate != null) {
-                finalDateInt = (int) (date.getTime() - lastDate.getTime());
+                finalDateInt = (double) (date.getTime() - lastDate.getTime());
             }
             dataRef7.child("Total" + currentLoginType).setValue(totalTime + (finalDateInt / (1000 * 60)));
-            dataRef7.child("LastSignIn" + currentLoginType).setValue(null);
-            dataRef7.child(currentLoginType + "Logs").child(currentTypeLastSignin).child("time").setValue(finalDateInt / (1000 * 60));
-            dataRef7.child(currentLoginType + "Logs").child(currentTypeLastSignin).child("status").setValue("Out");
+            dataRef7.child("Status").setValue("OUT");
+            dataRef7.child("Activity").setValue(currentLoginType);
 
             Intent returnIntent = new Intent(this, MainActivity.class);
             startActivity(returnIntent);
         } else {
-            if(otherTypesLoginStatus.get(0) == null && otherTypesLoginStatus.get(1) == null) {
-                LoginoutObject signSelfObject = new LoginoutObject();
-                signSelfObject.setTime(0);
-                signSelfObject.setStatus("In");
-                dataRef7.child("LastSignIn" + currentLoginType).setValue(uploadDate);
-                dataRef7.child(currentLoginType + "Logs").child(uploadDate).setValue(signSelfObject);
+            if(!(Status.equals("IN") && !Activity.equals(currentLoginType))) {
+                dataRef7.child("Status").setValue("IN");
+                dataRef7.child("Activity").setValue(currentLoginType);
+                dataRef7.child("StartTime").setValue(uploadDate);
                 AlertDialog.Builder timeDialogBuilder = new AlertDialog.Builder(appContext);
                 LinearLayout timeHolder = new LinearLayout(this);
 

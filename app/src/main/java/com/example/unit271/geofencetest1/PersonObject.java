@@ -13,18 +13,20 @@ public class PersonObject {
     private String password;
     @Exclude
     private String personName;
-    @PropertyName("LastSignInCompetition")
-    private String LastSignInCompetition;
-    @PropertyName("LastSignInRobotics")
-    private String LastSignInRobotics;
-    @PropertyName("LastSignInFM")
-    private String LastSignInFM;
-    @PropertyName("TotalCompetition")
-    private int TotalCompetition;
+    @PropertyName("Status")
+    private String Status;
+    @PropertyName("StartTime")
+    private String StartTime;
+    @PropertyName("StartDate")
+    private String StartDate;
     @PropertyName("TotalRobotics")
-    private int TotalRobotics;
-    @PropertyName("TotalFM")
-    private int TotalFM;
+    private double TotalRobotics;
+    @PropertyName("TotalOutreach")
+    private double TotalOutreach;
+    @PropertyName("Type")
+    private String Type;
+    @PropertyName("Activity")
+    private String Activity;
 
     public PersonObject(){
 
@@ -38,31 +40,32 @@ public class PersonObject {
         this.password = password;
     }
 
-    public void setLastSignInCompetition(String lastSignedInCompetition){
-        this.LastSignInCompetition = lastSignedInCompetition;
+    public void setStatus(String Status){
+        this.Status = Status;
     }
 
-    public void setLastSignInRobotics(String lastSignedInRobotics){
-        this.LastSignInRobotics = lastSignedInRobotics;
+    public void setStartTime(String StartTime){
+        this.StartTime = StartTime;
     }
 
-    public void setLastSignInFM(String lastSignedInFM){
-        this.LastSignInFM = lastSignedInFM;
+    public void setStartDate(String StartDate){
+        this.StartDate = StartDate;
     }
 
-    public void setTotalCompetition(int TotalCompetition){
-        this.TotalCompetition = 0;
-        this.TotalCompetition = TotalCompetition;
-    }
-
-    public void setTotalRobotics(int TotalRobotics){
-        this.TotalRobotics = 0;
+    public void setTotalRobotics(double TotalRobotics){
         this.TotalRobotics = TotalRobotics;
     }
 
-    public void setTotalFM(int TotalFM){
-        this.TotalFM = 0;
-        this.TotalFM = TotalFM;
+    public void setTotalOutreach(double TotalOutreach){
+        this.TotalOutreach = TotalOutreach;
+    }
+
+    public void setType(String Type){
+        this.Type = Type;
+    }
+
+    public void setActivity(String Activity){
+        this.Activity = Activity;
     }
 
     //**********************************************************************************************
@@ -75,27 +78,31 @@ public class PersonObject {
         return password;
     }
 
-    public String getLastSignInCompetition(){
-        return LastSignInCompetition;
+    public String getStatus(){
+        return Status;
     }
 
-    public String getLastSignInRobotics(){
-        return LastSignInRobotics;
+    public String getStartTime(){
+        return StartTime;
     }
 
-    public String getLastSignInFM(){
-        return LastSignInFM;
+    public String getStartDate(){
+        return StartDate;
     }
 
-    public int getTotalCompetition(){
-        return TotalCompetition;
-    }
-
-    public int getTotalRobotics(){
+    public double getTotalRobotics(){
         return TotalRobotics;
     }
 
-    public int getTotalFM(){
-        return TotalFM;
+    public double getTotalOutreach(){
+        return TotalOutreach;
+    }
+
+    public String getType(){
+        return Type;
+    }
+
+    public String getActivity(){
+        return Activity;
     }
 }

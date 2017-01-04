@@ -13,6 +13,7 @@ import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -110,50 +111,42 @@ public class ChangeTeamNumber extends AppCompatActivity {
     }
 
     public void onSaveClick(View view){
-        if(changeName.getText() != teamID){
-            Log.i("CHANGENAME", "NPF=TRUE");
-            boolean createNewPersonFirebase = true;
-            for(int a = 0; a <= existingPeople.size() - 1; a++){
-                if(changeName.getText().equals(existingPeople.get(a).getPersonName())){
-                    createNewPersonFirebase = false;
-                    Log.i("CHANGENAME", "NPF=FALSE");
+        if(!changeName.getText().toString().equals("")) {
+            if (changeName.getText() != teamID) {
+                Log.i("CHANGENAME", "NPF=TRUE");
+                boolean createNewPersonFirebase = true;
+                for (int a = 0; a <= existingPeople.size() - 1; a++) {
+                    if (changeName.getText().equals(existingPeople.get(a).getPersonName())) {
+                        createNewPersonFirebase = false;
+                        Log.i("CHANGENAME", "NPF=FALSE");
+                    }
+                }
+                if (createNewPersonFirebase) {
+                    //TODO : What should happen?
                 }
             }
-            if(createNewPersonFirebase){    //TODO : MAKE NEW THREAD HERE!
-                new Thread(){
-                    @Override
-                    public void run() {
-                        super.run();
-                        Log.i("CHANGENAME", "NPF=INPROGRESS");
-                        nameChangeDatabase.child(changeName.getText().toString()).setValue(nameChangeDatabase.child(teamID));
-                        nameChangeDatabase.child(teamID).setValue(null);
-                        Log.i("CHANGENAME", "NPF=COMPLETE");
-                        SharedPreferences.Editor editor = teamNumData.edit();
-                        editor.putString("newIDKey", changeName.getText().toString());
-                        editor.commit();
-                    }
-                }.start();
+            SharedPreferences.Editor editor = teamNumData.edit();
+            RadioGroup rGroup = (RadioGroup) findViewById(R.id.radioGroup1);
+            if (rGroup.getCheckedRadioButtonId() != -1) {
+                int id = rGroup.getCheckedRadioButtonId();
+                View radioButton = rGroup.findViewById(id);
+                int radioId = rGroup.indexOfChild(radioButton);
+                RadioButton btn = (RadioButton) rGroup.getChildAt(radioId);
+                selection = (String) btn.getText();
+                editor.putString("schoolName", selection);
             }
-        }
-        SharedPreferences.Editor editor = teamNumData.edit();
-        RadioGroup rGroup = (RadioGroup) findViewById(R.id.radioGroup1);
-        if(rGroup.getCheckedRadioButtonId() != -1){
-            int id = rGroup.getCheckedRadioButtonId();
-            View radioButton = rGroup.findViewById(id);
-            int radioId = rGroup.indexOfChild(radioButton);
-            RadioButton btn = (RadioButton) rGroup.getChildAt(radioId);
-            selection = (String) btn.getText();
-            editor.putString("schoolName", selection);
-        }
-        editor.putBoolean("free1", cb1.isChecked());
-        editor.putBoolean("free6", cb6.isChecked());
-        editor.putBoolean("free7", cb7.isChecked());
+            editor.putBoolean("free1", cb1.isChecked());
+            editor.putBoolean("free6", cb6.isChecked());
+            editor.putBoolean("free7", cb7.isChecked());
 
-        if(!teamNumData.getBoolean("setupComplete", false)) {
-            editor.putBoolean("setupComplete", true);
+            if (!teamNumData.getBoolean("setupComplete", false)) {
+                editor.putBoolean("setupComplete", true);
+            }
+            editor.commit();
+            Intent returnIntent = new Intent(this, MainActivity.class);
+            startActivity(returnIntent);
+        } else {
+            Toast.makeText(getBaseContext(), "Enter a Valid Name.", Toast.LENGTH_SHORT).show();
         }
-        editor.commit();
-        Intent returnIntent = new Intent(this, MainActivity.class);
-        startActivity(returnIntent);
     }
 }

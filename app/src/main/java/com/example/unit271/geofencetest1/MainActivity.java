@@ -37,16 +37,17 @@ public class MainActivity extends FragmentActivity {
 
     SharedPreferences teamNumData;
     Long firstDate, lastDate;
+    public String firstDateString;
     private String teamID;
     private TextView numView;
+    public double TotalRobotics, TotalOutreach;
     public boolean switchPermission;
     public boolean buttonPermission;
     public boolean startPerm;
     public Switch locationSwitch;
-    public int totalRobotics, totalFM, totalCompetition;
     public static String filename = "NumberHolder";
     private DatabaseReference mDatabase, fbRef1;
-    public Button manualButton;
+    public Button manualButton, averageButton;
     CountDownTimer dTimer2;
     boolean countingDown;
     Context appContext;
@@ -68,11 +69,14 @@ public class MainActivity extends FragmentActivity {
         setTitle("Citrus Circuits");
         appContext = this;
 
+        averageButton = (Button) findViewById(R.id.averageButton);
+        averageButton.setEnabled(false);
         manualButton = (Button) findViewById(R.id.manualButton);
         numView = (TextView) findViewById(R.id.teamNumView2);
         locationSwitch = (Switch) findViewById(R.id.locationSwitch);
         switchPermission = teamNumData.getBoolean("switchPermission", true);
         locationSwitch.setChecked(switchPermission);
+        locationSwitch.setChecked(false);
         SharedPreferences.Editor editor = teamNumData.edit();
         editor.putBoolean("setInitialRange", locationSwitch.isChecked());
         editor.commit();
@@ -115,19 +119,33 @@ public class MainActivity extends FragmentActivity {
         }
 
         if(startPerm && buttonPermission && switchPermission){
-            startService();
+//            startService();
         }
 
         DatabaseReference fbRef1 = mDatabase.child("People").child(teamID);
         fbRef1.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                PersonObject self = new PersonObject();
-                self = dataSnapshot.getValue(PersonObject.class);
-                self.setPersonName(dataSnapshot.getKey());
-                totalRobotics = self.getTotalRobotics();
-                totalFM = self.getTotalFM();
-                totalCompetition = self.getTotalCompetition();
+                for(DataSnapshot infoSnapshot : dataSnapshot.getChildren()){
+                    try {
+                        if (infoSnapshot.getKey().equals("TotalRobotics")) {
+                            TotalRobotics = (double) infoSnapshot.getValue();
+                            Log.i("EXCEPTIONE", "TOTALROBOTICSSUCCESS");
+                        }
+                        if (infoSnapshot.getKey().equals("TotalOutreach")) {
+                            TotalOutreach = (double) infoSnapshot.getValue();
+                            Log.i("EXCEPTIONE", "TOTALOUTREACHSUCCESS");
+                        }
+                        if (infoSnapshot.getKey().equals("StartDate")) {
+                            firstDateString = infoSnapshot.getValue(String.class);
+                            Log.i("EXCEPTIONE", "STARTDATESUCCESS");
+                        }
+                    } catch(Exception e) {
+                        Log.i("EXCEPTIONE", "THROWN");
+                        e.printStackTrace();
+                    }
+                }
+                averageButton.setEnabled(true);
             }
 
             @Override
@@ -144,72 +162,62 @@ public class MainActivity extends FragmentActivity {
                 if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
                     buttonPermission = true;
                     if(startPerm && switchPermission){
-                        startService();
+//                        startService();
                     }
                 }
         }
     }
 
 
-    public Intent startService() {
-        Toast.makeText(getApplicationContext(), "Tracking Initialized.",
-                Toast.LENGTH_SHORT).show();
-        Intent i = new Intent(this, TrackingService.class);
-        startService(i);
-        Log.i("INITIALIZATION", "SERVICE STARTED");
-        return i;
-    }
-
-    public Intent stopService() {
-        Intent i = new Intent(this, TrackingService.class);
-        stopService(i);
-        Log.i("INITIALIZATION", "SERVICE STOPPED");
-        return i;
-    }
+//    public Intent startService() {
+//        Toast.makeText(getApplicationContext(), "Tracking Initialized.",
+//                Toast.LENGTH_SHORT).show();
+//        Intent i = new Intent(this, TrackingService.class);
+//        startService(i);
+//        Log.i("INITIALIZATION", "SERVICE STARTED");
+//        return i;
+//    }
+//
+//    public Intent stopService() {
+//        Intent i = new Intent(this, TrackingService.class);
+//        stopService(i);
+//        Log.i("INITIALIZATION", "SERVICE STOPPED");
+//        return i;
+//    }
 
     public void onAvgClick(View view){
-        final SimpleDateFormat dateFormatter = new SimpleDateFormat("MM-dd-yyyy-HHmm", Locale.US);
-        final DatabaseReference fbRef2 = mDatabase.child("People").child(teamID).child("RoboticsLogs");
-        fbRef2.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {   //TODO: ask how to calculate weeks, and test what happens if no logins
-                for(DataSnapshot childSnapshot : dataSnapshot.getChildren()){
-                    try {
-                        firstDate = dateFormatter.parse(childSnapshot.getKey()).getTime();
-                    } catch(ParseException pe){
-                        pe.printStackTrace();
-                    }
-                    break;
-                }
-                fbRef2.removeEventListener(this);
-                displayAverage();
+        SimpleDateFormat averageFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss +0000", Locale.US);
+        lastDate = System.currentTimeMillis();
+        try {
+            if(firstDateString != null) {
+                firstDate = averageFormatter.parse(firstDateString).getTime();
             }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
+        } catch(ParseException pe) {
+            firstDate = null;
+            pe.printStackTrace();
+        }
+        double timeElapsedWeeks = 0;
+        double firstDateDouble = firstDate.doubleValue();
+        double lastDateDouble = lastDate.doubleValue();
+        double totalHours = ((TotalOutreach + TotalRobotics) / 60);
+        Log.i("TOTALHOURS", String.valueOf(totalHours));
+        double hoursPerWeek = 0;
+        if(firstDate != null && lastDate != null) {
+            timeElapsedWeeks = ((lastDateDouble - firstDateDouble) / (1000 * 60 * 60 * 24 * 7));
+            Log.i("TIMEWEEKS", String.valueOf(timeElapsedWeeks));
+            hoursPerWeek = (totalHours / timeElapsedWeeks);
+        }
+        displayAverage(hoursPerWeek);
     }
 
-    public void displayAverage(){
-        lastDate = System.currentTimeMillis();
-        if(firstDate != null && lastDate != null) {
-            Long timeDifference = lastDate - firstDate;
-            Long timeDifferenceHrs = (timeDifference / (1000 * 60 * 60));
-            double timeDifferenceWeeks = timeDifferenceHrs / (24 * 7);
-            double netAttendanceHrs = ((totalRobotics + totalFM + totalCompetition) / 60);
-            double hoursPerWeek = 0;
-            if(timeDifferenceWeeks != 0){
-                hoursPerWeek = (netAttendanceHrs / timeDifferenceWeeks);
-            }
+    public void displayAverage(double HPW){
             AlertDialog.Builder HPWBuilder = new AlertDialog.Builder(appContext);
             TextView customTitleView = new TextView(this);
-            customTitleView.setText("Average Hours Per Week");
+            customTitleView.setText(String.valueOf("Average Hours Per Week"));
             customTitleView.setTextColor(Color.BLACK);
             customTitleView.setTextSize(20);
             TextView hoursTimeView = new TextView(this);
-            hoursTimeView.setText(String.valueOf(hoursPerWeek));
+            hoursTimeView.setText(String.valueOf(HPW));
             hoursTimeView.setTextColor(Color.MAGENTA);
             HPWBuilder.setView(hoursTimeView);  //TODO : make alert dialogs uncancelable
             HPWBuilder.setCancelable(true).setCustomTitle(customTitleView).setPositiveButton("Ok", new DialogInterface.OnClickListener() {
@@ -220,7 +228,6 @@ public class MainActivity extends FragmentActivity {
             });
             AlertDialog HPWDialog = HPWBuilder.create();
             HPWDialog.show();
-        }
     }
 
     public void changeNumber(View view){
@@ -243,25 +250,25 @@ public class MainActivity extends FragmentActivity {
         }
     }
 
-    public void processSwitch(View view){
-        boolean switchState = locationSwitch.isChecked();
-        SharedPreferences.Editor editor = teamNumData.edit();
-        if(switchState){
-            switchPermission = true;
-            editor.putBoolean("switchPermission", true);
-        } else {
-            switchPermission = false;
-            editor.putBoolean("switchPermission", false);
-            stopService();
-        }
-        editor.putBoolean("setInitialRange", switchState);
-        editor.commit();
-
-        switchPermission = teamNumData.getBoolean("switchPermission", true);
-        if(switchPermission && buttonPermission && startPerm){
-            startService();
-        }
-    }
+//    public void processSwitch(View view){
+//        boolean switchState = locationSwitch.isChecked();
+//        SharedPreferences.Editor editor = teamNumData.edit();
+//        if(switchState){
+//            switchPermission = true;
+//            editor.putBoolean("switchPermission", true);
+//        } else {
+//            switchPermission = false;
+//            editor.putBoolean("switchPermission", false);
+//            stopService();
+//        }
+//        editor.putBoolean("setInitialRange", switchState);
+//        editor.commit();
+//
+//        switchPermission = teamNumData.getBoolean("switchPermission", true);
+//        if(switchPermission && buttonPermission && startPerm){
+//            startService();
+//        }
+//    }
 
     public void decreaseHours(View view){
         if(!locationSwitch.isChecked()) {

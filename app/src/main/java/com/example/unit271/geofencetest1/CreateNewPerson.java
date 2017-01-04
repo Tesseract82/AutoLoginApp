@@ -16,7 +16,10 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Locale;
 
 public class CreateNewPerson extends AppCompatActivity {
 
@@ -56,6 +59,9 @@ public class CreateNewPerson extends AppCompatActivity {
     }
 
     public void onClickCreate(View view){
+        SimpleDateFormat startDateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss +0000", Locale.US);
+        Date creationDate = new Date(System.currentTimeMillis());
+        String creationString = startDateFormatter.format(creationDate);
         String newPassword = passText.getText().toString();
         String newName = nameText.getText().toString();
         boolean newPersonFirebase = true;
@@ -66,14 +72,13 @@ public class CreateNewPerson extends AppCompatActivity {
                 }
             }
             if(newPersonFirebase){
-                dataRef5.child("People").child(newName).child("LastSigninRobotics").setValue(null);
-                dataRef5.child("People").child(newName).child("LastSigninFM").setValue(null);
-                dataRef5.child("People").child(newName).child("LastSigninCompetition").setValue(null);
+                dataRef5.child("People").child(newName).child("TotalOutreach").setValue(0.0);
+                dataRef5.child("People").child(newName).child("TotalRobotics").setValue(0.0);
                 dataRef5.child("People").child(newName).child("Password").setValue(newPassword);
-                dataRef5.child("People").child(newName).child("TotalRobotics").setValue(0);
-                dataRef5.child("People").child(newName).child("TotalFM").setValue(0);
-                dataRef5.child("People").child(newName).child("TotalCompetition").setValue(0);
-                dataRef5.child("People").child(newName).child("Type").setValue("Student");
+                dataRef5.child("People").child(newName).child("Type").setValue("students");
+                dataRef5.child("People").child(newName).child("Status").setValue("OUT");
+                dataRef5.child("People").child(newName).child("StartDate").setValue(creationString);
+                dataRef5.child("People").child(newName).child("Activity").setValue("Robotics");
 
                 Toast.makeText(getApplicationContext(), ("New Profile : " + newName),
                         Toast.LENGTH_SHORT).show();
