@@ -214,6 +214,7 @@ public class signInOther extends AppCompatActivity {
                 params3.addRule(RelativeLayout.ALIGN_PARENT_START);
                 passwordText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
                 passwordText.setId(3);
+                passwordText.setHint("Password");
                 passwordText.setTextSize(20);
                 passwordText.setTextColor(Color.BLACK);
                 rl1.addView(rlPasswordView, params2);

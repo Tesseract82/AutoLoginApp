@@ -193,10 +193,10 @@ public class signInOther2 extends AppCompatActivity {
                     finalDateInt = (double) (date.getTime() - lastDate.getTime());
                 }
                 if(currentLoginType.equals("Team Meeting")) {
-                    dataRef3.child("TotalRobotics").setValue(totalTime + (finalDateInt / (1000 * 60)));
+                    dataRef3.child("TotalRobotics").setValue(totalTime + (finalDateInt / (1000 * 60 * 60)));
                 }
                 if(currentLoginType.equals("Outreach")){
-                    dataRef3.child("TotalOutreach").setValue(totalTime + (finalDateInt / (1000 * 60)));
+                    dataRef3.child("TotalOutreach").setValue(totalTime + (finalDateInt / (1000 * 60 * 60)));
                 }
                 dataRef3.child("Status").setValue("OUT");
                 dataRef3.child("Activity").setValue(currentLoginType);

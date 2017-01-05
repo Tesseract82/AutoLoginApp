@@ -202,10 +202,10 @@ public class ManualSignIn extends AppCompatActivity {
                     finalDateInt = (double) (date.getTime() - lastDate.getTime());
                 }
                 if(currentLoginType.equals("Team Meeting")) {
-                    dataRef7.child("TotalRobotics").setValue(totalTime + (finalDateInt / (1000 * 60)));
+                    dataRef7.child("TotalRobotics").setValue(totalTime + (finalDateInt / (1000 * 60 * 60)));
                 }
                 if(currentLoginType.equals("Outreach")){
-                    dataRef7.child("TotalOutreach").setValue(totalTime + (finalDateInt / (1000 * 60)));
+                    dataRef7.child("TotalOutreach").setValue(totalTime + (finalDateInt / (1000 * 60 * 60)));
                 }
                 dataRef7.child("Status").setValue("OUT");
                 dataRef7.child("Activity").setValue(currentLoginType);

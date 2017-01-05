@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.InputType;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -23,6 +24,8 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 
 public class ChangeTeamNumber extends AppCompatActivity {
 
@@ -33,6 +36,7 @@ public class ChangeTeamNumber extends AppCompatActivity {
     private CheckBox cb7;
     private CheckBox cb6;
     private CheckBox cb1;
+    ValueEventListener nameDatabaseListener;
     ArrayList<PersonObject> existingPeople;
     Boolean free1;
     Boolean free6;
@@ -59,7 +63,7 @@ public class ChangeTeamNumber extends AppCompatActivity {
         existingPeople.clear();
         oldPersonFirebase = null;
         nameChangeDatabase = FirebaseDatabase.getInstance().getReference();
-        nameChangeDatabase.addValueEventListener(new ValueEventListener() {
+        nameDatabaseListener = new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 for (DataSnapshot personSnapshot: dataSnapshot.getChildren()) {
@@ -77,7 +81,8 @@ public class ChangeTeamNumber extends AppCompatActivity {
             public void onCancelled(DatabaseError databaseError) {
 
             }
-        });
+        };
+        nameChangeDatabase.addValueEventListener(nameDatabaseListener);
         cb1 = (CheckBox) findViewById(R.id.checkPer1);
         cb6 = (CheckBox) findViewById(R.id.checkPer6);
         cb7 = (CheckBox) findViewById(R.id.checkPer7);
@@ -118,7 +123,16 @@ public class ChangeTeamNumber extends AppCompatActivity {
     }
 
     public void onSaveClick(View view){
-        if(!changeName.getText().toString().equals("")) {
+        nameChangeDatabase.removeEventListener(nameDatabaseListener);
+        boolean containsIllegalCharacters = false;
+        ArrayList<String> illegalCharacters = new ArrayList<>(Arrays.asList(".", "#", "$", "[", "]"));
+        for(int a = 0; a <= illegalCharacters.size() - 1; a++){
+            if(changeName.getText().toString().contains(illegalCharacters.get(a))){
+                containsIllegalCharacters = true;
+                break;
+            }
+        }
+        if(!changeName.getText().toString().equals("") && !containsIllegalCharacters) {
             if (!changeName.getText().toString().equals(teamID)) {
                 Log.i("CHANGENAME TEAMID", teamID);
                 Log.i("CHANGENAME", changeName.getText().toString());

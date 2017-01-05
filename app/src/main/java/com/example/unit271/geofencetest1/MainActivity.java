@@ -17,7 +17,9 @@ import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -27,6 +29,8 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+
+import org.w3c.dom.Text;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -199,35 +203,49 @@ public class MainActivity extends FragmentActivity {
         double timeElapsedWeeks = 0;
         double firstDateDouble = firstDate.doubleValue();
         double lastDateDouble = lastDate.doubleValue();
-        double totalHours = ((TotalOutreach + TotalRobotics) / 60);
-        Log.i("TOTALHOURS", String.valueOf(totalHours));
-        double hoursPerWeek = 0;
+        double totalHoursRobotics = TotalRobotics;
+        double totalHoursOutreach = TotalOutreach;
+        double hoursPerWeekRobotics = 0;
+        double hoursPerWeekOutreach = 0;
         if(firstDate != null && lastDate != null) {
             timeElapsedWeeks = ((lastDateDouble - firstDateDouble) / (1000 * 60 * 60 * 24 * 7));
             Log.i("TIMEWEEKS", String.valueOf(timeElapsedWeeks));
-            hoursPerWeek = (totalHours / timeElapsedWeeks);
+            hoursPerWeekRobotics = (totalHoursRobotics / timeElapsedWeeks);
+            hoursPerWeekOutreach = (totalHoursOutreach / timeElapsedWeeks);
         }
-        displayAverage(hoursPerWeek);
+        displayAverage(hoursPerWeekRobotics, hoursPerWeekOutreach);
     }
 
-    public void displayAverage(double HPW){
-            AlertDialog.Builder HPWBuilder = new AlertDialog.Builder(appContext);
-            TextView customTitleView = new TextView(this);
-            customTitleView.setText(String.valueOf("Average Hours Per Week"));
-            customTitleView.setTextColor(Color.BLACK);
-            customTitleView.setTextSize(20);
-            TextView hoursTimeView = new TextView(this);
-            hoursTimeView.setText(String.valueOf(HPW));
-            hoursTimeView.setTextColor(Color.MAGENTA);
-            HPWBuilder.setView(hoursTimeView);  //TODO : make alert dialogs uncancelable
-            HPWBuilder.setCancelable(true).setCustomTitle(customTitleView).setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    dialog.dismiss();
-                }
-            });
-            AlertDialog HPWDialog = HPWBuilder.create();
-            HPWDialog.show();
+    public void displayAverage(double HPWRobotics, double HPWOutreach){
+        AlertDialog.Builder HPWBuilder = new AlertDialog.Builder(this);
+        TextView customTitleView = new TextView(this);
+        customTitleView.setText(String.valueOf("Average Hours Per Week"));
+        customTitleView.setTextColor(Color.BLACK);
+        customTitleView.setTextSize(20);
+        TextView hoursTimeView = new TextView(this);
+        hoursTimeView.setText("Robotics : " + String.valueOf(HPWRobotics));
+        hoursTimeView.setTextColor(Color.MAGENTA);
+        TextView hoursTimeViewOut = new TextView(this);
+        hoursTimeViewOut.setText("Outreach : " + String.valueOf(HPWOutreach));
+        hoursTimeViewOut.setTextColor(Color.MAGENTA);
+        LinearLayout averageLayout = new LinearLayout(this);
+        averageLayout.setOrientation(LinearLayout.VERTICAL);
+
+        if(averageLayout.getParent() != null) {
+            ((ViewGroup) averageLayout.getParent()).removeAllViews();
+        }
+        averageLayout.removeAllViews();
+        averageLayout.addView(hoursTimeView);
+        averageLayout.addView(hoursTimeViewOut);
+        HPWBuilder.setView(averageLayout);
+        HPWBuilder.setCancelable(true).setCustomTitle(customTitleView).setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+        AlertDialog HPWDialog = HPWBuilder.create();
+        HPWDialog.show();
     }
 
     public void changeNumber(View view){

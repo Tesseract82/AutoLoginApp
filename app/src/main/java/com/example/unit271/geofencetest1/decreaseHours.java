@@ -162,15 +162,15 @@ public class decreaseHours extends AppCompatActivity {
         }
         if(intValRobotics >= 0 && intValOutreach >= 0 && !numFormatException) {
             if (!strValRobotics.equals("")) {
-                if(TotalRobotics - (intValRobotics * 60) >= 0) {
-                    dataRef6.child("TotalRobotics").setValue(TotalRobotics - (intValRobotics * 60));
+                if(TotalRobotics - intValRobotics >= 0) {
+                    dataRef6.child("TotalRobotics").setValue(TotalRobotics - intValRobotics);
                 } else {
                     dataRef6.child("TotalRobotics").setValue(0);
                 }
             }
             if (!strValOutreach.equals("")) {
-                if(TotalOutreach - (intValOutreach * 60) >= 0) {
-                    dataRef6.child("TotalOutreach").setValue(TotalOutreach - (intValOutreach * 60));
+                if(TotalOutreach - intValOutreach >= 0) {
+                    dataRef6.child("TotalOutreach").setValue(TotalOutreach - intValOutreach);
                 } else {
                     dataRef6.child("TotalOutreach").setValue(0);
                 }
