@@ -4,6 +4,8 @@ import com.google.firebase.database.Exclude;
 import com.google.firebase.database.IgnoreExtraProperties;
 import com.google.firebase.database.PropertyName;
 
+import java.util.ArrayList;
+
 /**
  * Created by unit271 on 8/8/16.
  */

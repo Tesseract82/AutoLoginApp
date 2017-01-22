@@ -3,6 +3,7 @@ package com.example.unit271.geofencetest1;
 import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -15,6 +16,7 @@ import android.os.CountDownTimer;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -42,11 +44,9 @@ public class MainActivity extends FragmentActivity {
     public boolean switchPermission;
     public boolean buttonPermission;
     public boolean startPerm;
-    public Switch locationSwitch;
     public int totalRobotics, totalFM, totalCompetition;
     public static String filename = "NumberHolder";
     private DatabaseReference mDatabase, fbRef1;
-    public Button manualButton;
     CountDownTimer dTimer2;
     boolean countingDown;
     Context appContext;
@@ -69,6 +69,7 @@ public class MainActivity extends FragmentActivity {
         appContext = this;
 
         manualButton = (Button) findViewById(R.id.manualButton);
+        decreaseHoursButton = (Button) findViewById(R.id.decreaseHoursButton);
         numView = (TextView) findViewById(R.id.teamNumView2);
         locationSwitch = (Switch) findViewById(R.id.locationSwitch);
         switchPermission = teamNumData.getBoolean("switchPermission", true);
@@ -118,24 +119,28 @@ public class MainActivity extends FragmentActivity {
             startService();
         }
 
-        DatabaseReference fbRef1 = mDatabase.child("People").child(teamID);
-        fbRef1.addValueEventListener(new ValueEventListener() {
+        StaticPersonListReference.globalObjectList = new GlobalObjectList<PersonObject>("", new GlobalObjectList.PersonInfoChangedCallback() {
             @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                PersonObject self = new PersonObject();
-                self = dataSnapshot.getValue(PersonObject.class);
-                self.setPersonName(dataSnapshot.getKey());
-                totalRobotics = self.getTotalRobotics();
-                totalFM = self.getTotalFM();
-                totalCompetition = self.getTotalCompetition();
+            public void sendLocalBroadcast() {
+                LocalBroadcastManager.getInstance(getBaseContext()).sendBroadcast(new Intent().setAction("persons_updated"));
             }
+        }, PersonObject.class, "TEAMID");
 
+        BroadcastReceiver personChangeReceiver = new BroadcastReceiver() {
             @Override
-            public void onCancelled(DatabaseError databaseError) {
-
+            public void onReceive(Context context, Intent intent) {
+                if(intent.getAction().equals("person_updated")){
+                    for(int s = 0; s <= StaticPersonListReference.globalObjectList.getAllPeopleList().size() - 1; s++) {
+                        if(StaticPersonListReference.globalObjectList.getAllPeopleList().get(s).getPersonName().equals(teamID)){
+                            PersonObject self = StaticPersonListReference.globalObjectList.getAllPeopleList().get(s);
+                            totalRobotics = self.getTotalRobotics();
+                            totalFM = self.getTotalFM();
+                            totalCompetition = self.getTotalCompetition();
+                        }
+                    }
+                }
             }
-        });
-
+        };
     }
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults){

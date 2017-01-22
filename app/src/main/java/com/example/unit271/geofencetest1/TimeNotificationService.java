@@ -26,12 +26,6 @@ public class TimeNotificationService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-    }
-
-    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId){ //TODO : Stop service if person logs out?
-        super.onStartCommand(intent, flags, startId);
         teamNumData = getSharedPreferences(filename, 0);
         Log.i("TIMENOTIFICATIONSERVICE", "ONSTARTCOMMAND");
         final Uri alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
@@ -60,6 +54,13 @@ public class TimeNotificationService extends Service {
             }
         };
         loginTimer.start();
+    }
+
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId){ //TODO : Stop service if person logs out?
+        super.onStartCommand(intent, flags, startId);
+
         return Service.START_STICKY;
     }
 
